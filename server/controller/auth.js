@@ -2,13 +2,13 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
-import User from "../model/User.js";
+import User from "../models/User.js";
 
 dotenv.config();
 
 //signUp
 const postSignUp = async (req, res) => {
-  const { name, email, mobile, city, country, password} = req.body;
+  const { name, email, mobile, city, country, password, role } = req.body;
 
   if (!name) {
     return res.json({
@@ -33,6 +33,9 @@ const postSignUp = async (req, res) => {
       data: null,
     })
   }
+
+  const normalizedRole = role === "alumni" ? "alumni" : "student";
+
   const existingUser = await User.findOne({ email: email });
 
   if (existingUser) {
@@ -51,13 +54,17 @@ const postSignUp = async (req, res) => {
     mobile,
     city,
     country,
+    role: normalizedRole,
     password: encryptedPassword
   })
   try {
     const savedUser = await newUser.save();
+    const userData = savedUser.toObject();
+    delete userData.password;
+
     return res.json({
       success: true,
-      data: savedUser,
+      data: userData,
       message: "User register successfully"
     })
   } catch (e) {
@@ -102,10 +109,12 @@ const postLogin = async (req, res) => {
   const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
 
   if (isPasswordCorrect) {
+    const role = existingUser.role || "student";
     const jwttoken = jwt.sign(
       {
         id: existingUser._id,
         email: existingUser.email,
+        role,
       },
       process.env.JWT_SECRET,
       {

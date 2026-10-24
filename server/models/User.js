@@ -27,6 +27,11 @@ const userSchema = new Schema({
     address: {
         type: String,
     },
+    role: {
+      type: String,
+      enum: ["student", "alumni", "admin"],
+      default: "student",
+    },
     password: {
         type: String,
         required: true,

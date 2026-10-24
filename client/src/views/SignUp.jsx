@@ -19,6 +19,7 @@ function SignUp() {
     mobile: "",
     city: "",
     country: "",
+    role: "student",
     password: "",
   });
 
@@ -40,6 +41,7 @@ function SignUp() {
           mobile: "",
           city: "",
           country: "",
+          role: "student",
           password: "",
         });
 
@@ -117,6 +119,18 @@ function SignUp() {
                 onChange={(e) => setNewUser({ ...newUser, country: e.target.value })}
                 className="border px-3 py-2 rounded w-full"
               />
+
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Register as</label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                  className="border rounded-xl h-10 w-full px-3 text-sm text-slate-700 focus:outline-none focus:border-sky-500"
+                >
+                  <option value="student">Student</option>
+                  <option value="alumni">Alumni</option>
+                </select>
+              </div>
 
               <Input2
                 type="password"

@@ -30,10 +30,12 @@ function Login() {
         setLoginUser({ email: "", password: "" })
 
         const { token, data } = response.data;
-        localStorage.setItem("userData", JSON.stringify({ ...data, token }));
+        const userRole = (data?.role || "student").toLowerCase();
+        localStorage.setItem("userData", JSON.stringify({ ...data, token, role: userRole }));
         localStorage.setItem("userJwtToken", token);
         setTimeout(() => {
-          window.location.href = "/";
+          const dashboardRoute = userRole === "alumni" ? "/alumni/dashboard" : "/student/dashboard";
+          window.location.href = dashboardRoute;
         }, 1500)
 
       } else {
@@ -96,7 +98,7 @@ function Login() {
 
               <p className="text-center text-xs sm:text-sm">
                 Don't have an account?
-                <Link to="/signUp" className="text-purple-600 ml-1 font-semibold">
+                <Link to="/signup" className="text-purple-600 ml-1 font-semibold">
                   Sign Up
                 </Link>
               </p>
