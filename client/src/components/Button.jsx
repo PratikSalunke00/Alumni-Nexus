@@ -1,6 +1,6 @@
 import React from 'react'
 
-function Button({ title, size = "sm", varient = "primary", onClick }) {
+function Button({ title, size = "sm", varient = "primary", onClick, type = "button" }) {
   const size_classes = {
     sm: "px-3 py-1 text-sm",
     md: "px-6 py-2 text-base",
@@ -19,6 +19,7 @@ function Button({ title, size = "sm", varient = "primary", onClick }) {
   return (
     <div>
       <button
+        type={type}
         className={`px-6  bg-sky-500 text-white font-semibold rounded-lg 
              hover:bg-sky-600 transition duration-200 
              focus:outline-none focus:ring-2 focus:ring-sky-400 ${size_classes[size]} ${variant_classes[varient]}`}

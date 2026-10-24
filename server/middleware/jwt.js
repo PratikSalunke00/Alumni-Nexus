@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
 
+const JWT_SECRET = process.env.JWT_SECRET?.trim() || "alumni-nexus-dev-secret";
+process.env.JWT_SECRET = JWT_SECRET;
+
 const checkJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
-
-  console.log("AUTH HEADER:", authHeader);
 
   if (!authHeader) {
     return res.status(401).json({
@@ -15,12 +16,10 @@ const checkJWT = (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
-    console.log("DECODED USER:", decoded);
     next();
   } catch (err) {
-    console.log("JWT ERROR:", err);
     return res.status(401).json({
       success: false,
       message: "Invalid token"
@@ -28,4 +27,18 @@ const checkJWT = (req, res, next) => {
   }
 };
 
-export { checkJWT };
+const requireRole = (allowedRoles = []) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (allowedRoles.length && !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    next();
+  };
+};
+
+export { checkJWT, requireRole };

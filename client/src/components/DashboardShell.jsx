@@ -5,7 +5,7 @@ const roleLabels = {
     title: 'Student dashboard',
     nav: [
       { label: 'Overview', path: '/student/dashboard' },
-      { label: 'Profile', path: '/student/profile' },
+      { label: 'Profile', path: '/profile' },
       { label: 'Opportunities', path: '/student/opportunities' },
       { label: 'Referrals', path: '/student/referrals' },
       { label: 'Mentorship', path: '/student/mentorship' },
@@ -16,7 +16,7 @@ const roleLabels = {
     title: 'Alumni dashboard',
     nav: [
       { label: 'Overview', path: '/alumni/dashboard' },
-      { label: 'Profile', path: '/alumni/profile' },
+      { label: 'Profile', path: '/profile' },
       { label: 'Opportunities', path: '/alumni/opportunities' },
       { label: 'Referrals', path: '/alumni/referrals' },
       { label: 'Mentorship', path: '/alumni/mentorship' },
@@ -27,10 +27,10 @@ const roleLabels = {
     title: 'Admin dashboard',
     nav: [
       { label: 'Overview', path: '/admin/dashboard' },
+      { label: 'Verification queue', path: '/admin/verification-requests' },
       { label: 'Users', path: '/admin/users' },
       { label: 'Opportunities', path: '/admin/opportunities' },
       { label: 'Reports', path: '/admin/reports' },
-      { label: 'Announcements', path: '/admin/announcements' },
       { label: 'Settings', path: '/admin/settings' },
     ],
   },
@@ -44,7 +44,7 @@ const DashboardShell = ({ role = 'student', children, pageTitle }) => {
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6 lg:px-6">
         <aside className="hidden w-72 shrink-0 rounded-3xl border border-slate-200 bg-slate-900 p-5 text-slate-100 shadow-sm lg:block">
           <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-500 text-lg font-semibold text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500 text-lg font-semibold text-white">
               A
             </div>
             <div>
@@ -60,7 +60,7 @@ const DashboardShell = ({ role = 'student', children, pageTitle }) => {
                 to={item.path}
                 className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                   item.path.endsWith('dashboard')
-                    ? 'bg-indigo-500 text-white'
+                    ? 'bg-sky-500 text-white'
                     : 'text-slate-200 hover:bg-slate-800 hover:text-white'
                 }`}
               >
@@ -80,14 +80,14 @@ const DashboardShell = ({ role = 'student', children, pageTitle }) => {
         <main className="flex-1 rounded-3xl border border-slate-200 bg-white shadow-sm">
           <header className="flex flex-col gap-4 border-b border-slate-200 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-indigo-600">{config.title}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-sky-600">{config.title}</p>
               <h2 className="mt-1 text-2xl font-semibold text-slate-900">{pageTitle}</h2>
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 sm:block">
                 Search members, roles, companies
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-600 text-sm font-semibold text-white">
                 AD
               </div>
             </div>

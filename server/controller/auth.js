@@ -6,6 +6,9 @@ import User from "../models/User.js";
 
 dotenv.config();
 
+const JWT_SECRET = process.env.JWT_SECRET?.trim() || "alumni-nexus-dev-secret";
+process.env.JWT_SECRET = JWT_SECRET;
+
 //signUp
 const postSignUp = async (req, res) => {
   const { name, email, mobile, city, country, password, role } = req.body;
@@ -116,7 +119,7 @@ const postLogin = async (req, res) => {
         email: existingUser.email,
         role,
       },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       {
         expiresIn: "1h",
       }

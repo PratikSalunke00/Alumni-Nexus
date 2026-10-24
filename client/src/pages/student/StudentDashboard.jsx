@@ -5,14 +5,14 @@ import { studentStats, featuredOpportunities, alumniRecommendations, recentUpdat
 const StudentDashboard = () => (
   <DashboardShell role="student" pageTitle="Welcome back, Aditi">
     <div className="space-y-6">
-      <section className="rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
+      <section className="rounded-3xl border border-sky-100 bg-sky-50 p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-600">Profile completeness</p>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-600">Profile completeness</p>
             <h3 className="mt-2 text-3xl font-semibold text-slate-900">78% complete</h3>
             <p className="mt-2 max-w-xl text-slate-600">Add your portfolio, projects, and certifications to unlock stronger alumni referrals and personalized opportunities.</p>
           </div>
-          <button className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">Complete profile</button>
+          <button className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700">Complete profile</button>
         </div>
       </section>
 
@@ -26,7 +26,7 @@ const StudentDashboard = () => (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-slate-900">Recommended opportunities</h3>
-            <button className="text-sm font-medium text-indigo-600">View all</button>
+            <button className="text-sm font-medium text-sky-600">View all</button>
           </div>
 
           <div className="space-y-4">
@@ -56,7 +56,7 @@ const StudentDashboard = () => (
                 <p className="font-medium text-slate-800">{item.title}</p>
                 <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
                   <span>{item.company}</span>
-                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">{item.status}</span>
+                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">{item.status}</span>
                 </div>
               </div>
             ))}
@@ -68,7 +68,7 @@ const StudentDashboard = () => (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-slate-900">Verified alumni</h3>
-            <button className="text-sm font-medium text-indigo-600">Explore</button>
+            <button className="text-sm font-medium text-sky-600">Explore</button>
           </div>
           <div className="space-y-4">
             {alumniRecommendations.map((alumni) => (
@@ -77,7 +77,7 @@ const StudentDashboard = () => (
                   <p className="font-semibold text-slate-900">{alumni.name}</p>
                   <p className="text-sm text-slate-600">{alumni.role} · {alumni.company}</p>
                 </div>
-                <button className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700">Connect</button>
+                <button className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700">Connect</button>
               </div>
             ))}
           </div>
@@ -86,11 +86,11 @@ const StudentDashboard = () => (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-slate-900">Quick actions</h3>
-            <button className="text-sm font-medium text-indigo-600">Open alumni hub</button>
+            <button className="text-sm font-medium text-sky-600">Open alumni hub</button>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             {['Find alumni', 'Browse internships', 'Request referral'].map((action) => (
-              <button key={action} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+              <button key={action} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left text-sm font-medium text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
                 {action}
               </button>
             ))}

@@ -24,7 +24,7 @@ const LandingPage = () => {
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700">
+              <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
                 College-exclusive network
               </span>
               <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
@@ -76,7 +76,7 @@ const LandingPage = () => {
                         <p className="font-semibold text-slate-800">{item}</p>
                         <p className="text-sm text-slate-500">{index === 0 ? 'Google' : index === 1 ? 'Microsoft' : 'Amazon'}</p>
                       </div>
-                      <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700">
+                      <span className="rounded-full bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700">
                         {index === 0 ? 'Remote' : 'Bengaluru'}
                       </span>
                     </div>
@@ -90,14 +90,14 @@ const LandingPage = () => {
         <section className="bg-white py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">Why alumni nexus</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Why alumni nexus</p>
               <h2 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">Career support built for one college community.</h2>
             </div>
 
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {featureCards.map((card) => (
                 <div key={card.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-lg text-indigo-700">✦</div>
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-lg text-sky-700">✦</div>
                   <h3 className="text-xl font-semibold text-slate-900">{card.title}</h3>
                   <p className="mt-3 text-slate-600">{card.text}</p>
                 </div>
@@ -108,14 +108,14 @@ const LandingPage = () => {
 
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">User roles</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">User roles</p>
             <h2 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">A platform designed for every member.</h2>
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {roleCards.map((card) => (
               <div key={card.role} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-5 inline-flex rounded-full bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">{card.role}</div>
+                <div className="mb-5 inline-flex rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-700">{card.role}</div>
                 <p className="text-slate-600">{card.blurb}</p>
               </div>
             ))}

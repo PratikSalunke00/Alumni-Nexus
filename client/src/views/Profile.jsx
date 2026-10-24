@@ -1,235 +1,177 @@
-import { useState, useEffect, useRef } from "react";
-import { getUserData } from "../utils";
-import Navbar from "../components/Navbar"
-import Input2 from "../components/Input2";
-import Button from "../components/Button";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import ProfileImg from "../assets/profileUpdate.png"
-import { Link } from "react-router";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import Button from "../components/Button";
 import Heading from "../components/Heading";
-import Footer from "../components/Footer"
-import { setPageTitle } from "../utils.jsx"
-import SubHeading from "../components/SubHeading.jsx"
 
-
-import {
-  ImageKitAbortError,
-  ImageKitInvalidRequestError,
-  ImageKitServerError,
-  ImageKitUploadNetworkError,
-  upload,
-} from "@imagekit/react";
+const emptyProfile = {
+  name: "",
+  email: "",
+  mobile: "",
+  city: "",
+  country: "",
+  department: "",
+  branch: "",
+  graduationYear: "",
+  company: "",
+  designation: "",
+  bio: "",
+  skills: "",
+  github: "",
+  linkedin: "",
+  portfolio: "",
+  profileVisibility: "public",
+};
 
 function Profile() {
-  const [userData, setUserData] = useState({
-    name: "",
-    email: "",
-    mobile: "",
-    whatsapp: "",
-    address: "",
-    city: "",
-    pincode: "",
-    country: "",
-    photos: []
-  });
-  const [progress, setProgress] = useState(0);
-  const fileInputRef = useRef();
+  const [profile, setProfile] = useState(emptyProfile);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const authenticator = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Request failed with status ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      const { signature, expire, token, publicKey } = data;
-      return { signature, expire, token, publicKey };
-    } catch (error) {
-      console.error("Authentication error:", error);
-      throw new Error("Authentication request failed");
-    }
-  };
-
-  const handleUpload = async () => {
-    const fileInput = fileInputRef.current;
-    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-      alert("Please select a file to upload");
+  useEffect(() => {
+    const token = localStorage.getItem("userJwtToken");
+    if (!token) {
+      setError("Please log in to view your profile");
+      setLoading(false);
       return;
     }
 
-    const file = fileInput.files[0];
-
-    let authParams;
-    try {
-      authParams = await authenticator();
-    } catch (authError) {
-      console.error("Failed to authenticate for upload:", authError);
-      return;
-    }
-    const { signature, expire, token, publicKey } = authParams;
-    try {
-      const uploadResponse = await upload({
-        expire,
-        token,
-        signature,
-        publicKey,
-        file,
-        fileName: file.name,
-        onProgress: (event) => {
-          setProgress((event.loaded / event.total) * 100);
-        },
-      });
-
-      setUserData((prev) => {
-        const updatedData = {
-          ...prev,
-          photos: [uploadResponse.url]
-        };
-
-        localStorage.setItem("userData", JSON.stringify(updatedData));
-
-        return updatedData;
-      });
-
-      console.log("Upload response:", uploadResponse);
-    } catch (error) {
-      if (error instanceof ImageKitAbortError) {
-        console.error("Upload aborted:", error.reason);
-      } else if (error instanceof ImageKitInvalidRequestError) {
-        console.error("Invalid request:", error.message);
-      } else if (error instanceof ImageKitUploadNetworkError) {
-        console.error("Network error:", error.message);
-      } else if (error instanceof ImageKitServerError) {
-        console.error("Server error:", error.message);
-      } else {
-        console.error("Upload error:", error);
-      }
-    }
-  };
-
-  useEffect(() => {
-    setPageTitle("Alumni Nexus - Profile");
-  }, []);
-
-  useEffect(() => {
-    const data = getUserData();
-    console.log("USER DATA:", data);
-    setUserData(prev => ({ ...prev, ...data }));
+    axios
+      .get(`${import.meta.env.VITE_API_BASE_URL}/profile/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => {
+        const user = response.data?.data || {};
+        setProfile({
+          ...emptyProfile,
+          ...user,
+          skills: Array.isArray(user.skills) ? user.skills.join(", ") : "",
+        });
+      })
+      .catch(() => {
+        setError("Unable to load profile right now");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const handleChange = (e) => {
-    setUserData({
-      ...userData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const updateProfile = async () => {
-    try {
-      const token = localStorage.getItem("userJwtToken");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const token = localStorage.getItem("userJwtToken");
 
+    try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/profile`,
-        userData,
+        `${import.meta.env.VITE_API_BASE_URL}/profile/me`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+          ...profile,
+          skills: profile.skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const updatedUser = {
-        ...response.data.data,
-        photos: userData.photos
-      };
-
-      localStorage.setItem("userData", JSON.stringify(updatedUser));
-      window.dispatchEvent(new Event("storage"));
-
-      alert("Profile Updated Successfully");
-
-      window.location.reload();
-
-    } catch (error) {
-      console.log(error);
+      localStorage.setItem("userData", JSON.stringify(response.data.data));
+      alert("Profile updated successfully");
+    } catch (requestError) {
+      alert(requestError.response?.data?.message || "Failed to update profile");
     }
   };
 
   return (
-    <div>
+    <>
       <Navbar />
+      <div className="mx-auto max-w-5xl px-4 py-10">
+        <Heading text="My Profile" />
 
-      <Heading text="Update Profile" />
-      <div className="bg-white shadow-lg rounded-lg flex flex-col md:flex-row w-full max-w-4xl mx-auto overflow-hidden mt-10">
-        <div className="flex flex-col items-center">
-          <img src={ProfileImg} alt="Profile" className="h-full w-2/3 object-cover" />
-        </div>
-
-        <div className="flex flex-col justify-center items-center min-h-[80vh] md:mr-10 ">
-          <SubHeading text="Welcome Back" />
-
-          <p className="text-xs sm:text-sm text-center text-gray-500 mb-3">
-            Update your profile information
-          </p>
-
-          <div className="w-full mx-2 my-2 space-y-4">
-
-            <div className="flex justify-center">
-              {userData.photos?.map((photo, index) => (
-                <img
-                  key={index}
-                  src={photo}
-                  alt={`Profile Photo`}
-                  className="w-16 h-16 object-cover rounded-full"
-                />
-              ))}
+        {loading ? (
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 text-slate-600">Loading profile...</div>
+        ) : error ? (
+          <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">{error}</div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-8 grid gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Name</label>
+              <input name="name" value={profile.name} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
             </div>
-
-            <input type="file" ref={fileInputRef}
-              onChange={(e) => {
-                if (e.target.files.length > 0) {
-                  handleUpload();
-                }
-              }}
-              className="border rounded h-8 block w-full text-sm text-center px-13 md:px-25 cursor-pointer"
-            />
-
-            <Input2 name="name"
-              value={userData.name}
-              onChange={handleChange}
-              placeholder="Name"
-            />
-
-            <Input2 name="email"
-              value={userData.email}
-              onChange={handleChange}
-              placeholder="Email"
-             
-            />
-
-            <Input2 name="mobile"
-              value={userData.mobile}
-              onChange={handleChange}
-              placeholder="Mobile" />
-
-           
-            <Input2 name="city"
-              value={userData.city}
-              onChange={handleChange}
-              placeholder="City" />
-
-            
-
-            <Link to="/" className="flex justify-center">
-              <Button title="Update Profile" varient="primary" onClick={updateProfile} />
-            </Link>
-          </div>
-        </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Email</label>
+              <input name="email" value={profile.email} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Mobile</label>
+              <input name="mobile" value={profile.mobile} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">City</label>
+              <input name="city" value={profile.city} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Country</label>
+              <input name="country" value={profile.country} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Department</label>
+              <input name="department" value={profile.department} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Branch</label>
+              <input name="branch" value={profile.branch} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Graduation Year</label>
+              <input type="number" name="graduationYear" value={profile.graduationYear} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-slate-700">Skills</label>
+              <input name="skills" value={profile.skills} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-slate-700">Bio</label>
+              <textarea name="bio" value={profile.bio} onChange={handleChange} className="min-h-24 w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Company</label>
+              <input name="company" value={profile.company} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Designation</label>
+              <input name="designation" value={profile.designation} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">GitHub</label>
+              <input name="github" value={profile.github} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">LinkedIn</label>
+              <input name="linkedin" value={profile.linkedin} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-slate-700">Portfolio</label>
+              <input name="portfolio" value={profile.portfolio} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Profile visibility</label>
+              <select name="profileVisibility" value={profile.profileVisibility} onChange={handleChange} className="w-full rounded-xl border border-slate-200 p-3">
+                <option value="public">Public</option>
+                <option value="college">College</option>
+                <option value="private">Private</option>
+              </select>
+            </div>
+            <div className="md:col-span-2 flex justify-end">
+              <Button title="Save profile" type="submit" varient="primary" />
+            </div>
+          </form>
+        )}
       </div>
       <Footer />
-    </div>
+    </>
   );
 }
 

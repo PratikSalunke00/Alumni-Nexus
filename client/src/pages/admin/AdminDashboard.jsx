@@ -15,7 +15,7 @@ const AdminDashboard = () => (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-slate-900">User management</h3>
-            <button className="text-sm font-medium text-indigo-600">Search users</button>
+            <button className="text-sm font-medium text-sky-600">Search users</button>
           </div>
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             <table className="min-w-full text-left text-sm">
@@ -48,7 +48,7 @@ const AdminDashboard = () => (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <h3 className="text-xl font-semibold text-slate-900">Opportunity moderation</h3>
-            <button className="text-sm font-medium text-indigo-600">Review queue</button>
+            <button className="text-sm font-medium text-sky-600">Review queue</button>
           </div>
           <div className="space-y-3">
             {opportunityModeration.map((item) => (
@@ -58,7 +58,7 @@ const AdminDashboard = () => (
                     <p className="font-medium text-slate-800">{item.title}</p>
                     <p className="text-sm text-slate-600">{item.company}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs font-medium ${item.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : item.status === 'Reviewing' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <span className={`rounded-full px-2 py-1 text-xs font-medium ${item.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : item.status === 'Reviewing' ? 'bg-sky-100 text-sky-700' : 'bg-amber-100 text-amber-700'}`}>
                     {item.status}
                   </span>
                 </div>
