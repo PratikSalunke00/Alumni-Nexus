@@ -1,6 +1,7 @@
 
 import DashboardShell from '../../components/DashboardShell';
 import StatCard from '../../components/StatCard';
+import StudentNavbar from '../../components/studentNavbar';
 import {
   studentStats,
   featuredOpportunities,
@@ -13,8 +14,11 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
 
   return (
+    <> <StudentNavbar/>
     <DashboardShell role="student" pageTitle="Welcome back, Aditi">
+      
       <div className="space-y-6">
+       
         {/* Profile completeness */}
         <section className="rounded-3xl border border-sky-100 bg-sky-50 p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -189,6 +193,7 @@ const StudentDashboard = () => {
         </section>
       </div>
     </DashboardShell>
+    </>
   );
 };
 
