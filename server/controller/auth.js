@@ -39,28 +39,29 @@ const postSignUp = async (req, res) => {
 
   const normalizedRole = role === "alumni" ? "alumni" : "student";
 
-  const existingUser = await User.findOne({ email: email });
-
-  if (existingUser) {
-    return res.json({
-      success: false,
-      message: "user with this email already exists",
-      data: null,
-    })
-  }
-
-  const salt = bcrypt.genSaltSync(10);
-  const encryptedPassword = bcrypt.hashSync(password, salt);
-  const newUser = new User({
-    name,
-    email,
-    mobile,
-    city,
-    country,
-    role: normalizedRole,
-    password: encryptedPassword
-  })
   try {
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.json({
+        success: false,
+        message: "user with this email already exists",
+        data: null,
+      })
+    }
+
+    const salt = bcrypt.genSaltSync(10);
+    const encryptedPassword = bcrypt.hashSync(password, salt);
+    const newUser = new User({
+      name,
+      email,
+      mobile,
+      city,
+      country,
+      role: normalizedRole,
+      password: encryptedPassword
+    })
+
     const savedUser = await newUser.save();
     const userData = savedUser.toObject();
     delete userData.password;
@@ -71,9 +72,10 @@ const postSignUp = async (req, res) => {
       message: "User register successfully"
     })
   } catch (e) {
-    return res.json({
+    console.error("Signup failed:", e);
+    return res.status(500).json({
       success: false,
-      message: `User register failed ${e.message}`,
+      message: "User registration failed. Please try again later.",
       data: null
     })
   }

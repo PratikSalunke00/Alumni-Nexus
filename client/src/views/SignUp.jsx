@@ -12,6 +12,7 @@ import Heading from "../components/Heading.jsx";
 function SignUp() {
 
   const navigate = useNavigate();
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -28,7 +29,7 @@ function SignUp() {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/signUp`,
+        `${apiBaseUrl}/signUp`,
         newUser
       );
 
@@ -52,7 +53,15 @@ function SignUp() {
         toast.error(response.data.message, { id: "signuperror" });
       }
     } catch (error) {
-      toast.error("Server not responding: " + error.message);
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message
+          || (error.response
+            ? `Signup failed with status ${error.response.status}.`
+            : `Cannot reach the API at ${apiBaseUrl}. Make sure the backend server is running.`);
+        toast.error(message, { id: "signupError" });
+      } else {
+        toast.error("Unable to complete signup due to an unexpected error.", { id: "signupError" });
+      }
     }
   };
 
