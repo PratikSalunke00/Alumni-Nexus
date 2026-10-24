@@ -408,7 +408,8 @@ const StudentProfile = () => {
     }
   };
 
-  const handleUpload = async (event, kind) => {
+
+const handleUpload = async (event, kind) => {
   const file = event.target.files?.[0];
   event.target.value = '';
 
@@ -416,6 +417,7 @@ const StudentProfile = () => {
 
   const isPhoto = kind === 'photo';
 
+  // Validate the selected file
   const allowedTypes = isPhoto
     ? ['image/jpeg', 'image/png', 'image/webp']
     : ['application/pdf'];
@@ -429,6 +431,7 @@ const StudentProfile = () => {
     return;
   }
 
+  // Maximum file size: 5 MB
   if (file.size > 5 * 1024 * 1024) {
     toast.error('The maximum file size is 5 MB.');
     return;
@@ -436,71 +439,72 @@ const StudentProfile = () => {
 
   const previewUrl = URL.createObjectURL(file);
 
-  if (isPhoto) setPhotoPreview(previewUrl);
-  else setResumePreview(previewUrl);
+  if (isPhoto) {
+    setPhotoPreview(previewUrl);
+  } else {
+    setResumePreview(previewUrl);
+  }
 
   setUploading(kind);
 
   try {
-    let uploadedUrl;
+    // Step 1: Get secure upload credentials from your backend
+    const { data: auth } = await axios.get(
+      `${API_URL}/api/student/imagekit-auth/auth`,
+      getConfig()
+    );
 
-    if (isPhoto) {
-      // 1. Get secure upload credentials from your backend
-      const { data: auth } = await axios.get(
-        `${API_URL}/api/student/imagekit-auth/auth`,
-        getConfig()
+    if (
+      !auth.token ||
+      !auth.signature ||
+      !auth.expire ||
+      !auth.publicKey
+    ) {
+      throw new Error(
+        'ImageKit authentication credentials are incomplete.'
       );
-
-      // 2. Upload the image directly to ImageKit
-      const result = await upload({
-        file,
-        fileName: file.name,
-        token: auth.token,
-        signature: auth.signature,
-        expire: auth.expire,
-        publicKey: auth.publicKey,
-        folder: '/student-profiles',
-        useUniqueFileName: true,
-      });
-
-      uploadedUrl = result.url;
-    } else {
-      // Keep your existing backend resume-upload flow
-      const formData = new FormData();
-      formData.append('resume', file);
-
-      const { data } = await axios.post(
-        `${API_URL}/api/student/profile/resume`,
-        formData,
-        {
-          ...getConfig(),
-          headers: {
-            ...getConfig().headers,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      uploadedUrl =
-        data.url || data.resume || data.profile?.resume;
     }
+
+    // Step 2: Upload both images and PDFs directly to ImageKit
+    const result = await upload({
+      file,
+      fileName: file.name,
+      token: auth.token,
+      signature: auth.signature,
+      expire: auth.expire,
+      publicKey: auth.publicKey,
+      folder: isPhoto
+        ? '/student-profiles'
+        : '/student-resumes',
+      useUniqueFileName: true,
+    });
+
+    const uploadedUrl = result.url;
 
     if (!uploadedUrl) {
-      throw new Error('Upload completed without returning a file URL.');
+      throw new Error('ImageKit did not return a file URL.');
     }
 
-    // 3. Store the URL in the profile draft
+    // Step 3: Store the ImageKit URL in the profile draft
     updateField(isPhoto ? 'photo' : 'resume', uploadedUrl);
 
-    if (isPhoto) setPhotoPreview(uploadedUrl);
-    else setResumePreview(uploadedUrl);
+    if (isPhoto) {
+      setPhotoPreview(uploadedUrl);
+    } else {
+      setResumePreview(uploadedUrl);
+    }
 
     toast.success(
-      `${isPhoto ? 'Profile photo' : 'Resume'} uploaded. Save your profile to keep the changes.`
+      `${isPhoto ? 'Profile photo' : 'Resume'} uploaded successfully. Save your profile to keep the changes.`
     );
   } catch (error) {
-    if (isPhoto) setPhotoPreview(draft.photo || '');
-    else setResumePreview(draft.resume || '');
+    console.error('ImageKit upload error:', error);
+
+    if (isPhoto) {
+      setPhotoPreview(draft.photo || '');
+    } else {
+      setResumePreview(draft.resume || '');
+    }
 
     toast.error(getErrorMessage(error));
   } finally {
@@ -508,6 +512,7 @@ const StudentProfile = () => {
     setUploading('');
   }
 };
+
   
 
   const removeUpload = async (kind) => {
