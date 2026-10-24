@@ -4,6 +4,7 @@ import axios from 'axios';
 import DashboardShell from '../../components/DashboardShell';
 import toast, { Toaster } from 'react-hot-toast';
 import { upload } from '@imagekit/javascript';
+import StudentNavbar from '../../components/studentNavbar';
 
 const API_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -1282,7 +1283,9 @@ const StudentProfile = () => {
   };
 
   return (
+    <><StudentNavbar />
     <DashboardShell role="student" pageTitle="My Profile">
+      
       <Toaster position="top-right" />
 
       <div className="mx-auto max-w-6xl space-y-6 pb-8">
@@ -1468,6 +1471,7 @@ const StudentProfile = () => {
         )}
       </div>
     </DashboardShell>
+    </>
   );
 };
 
