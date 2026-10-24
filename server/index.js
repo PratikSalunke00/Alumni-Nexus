@@ -10,6 +10,8 @@ import { checkJWT, requireRole } from "./middleware/jwt.js";
 import { postReview, getReviews } from "./controller/review.js";
 import { getCurrentProfile, updateCurrentProfile, submitVerificationRequest, getVerificationRequests, updateVerificationStatus } from "./controller/profile.js";
 import { getOpportunities, createOpportunity, getReferrals, createReferral, getMentorshipRequests, createMentorshipRequest } from "./controller/community.js";
+import imagekitRoutes from "./routes/imagekit.routes.js";
+
 
 const app = express();
 app.use(express.json());
@@ -36,6 +38,7 @@ app.get("/mentorship-requests", checkJWT, getMentorshipRequests);
 app.post("/mentorship-requests", checkJWT, createMentorshipRequest);
 app.get("/reviews", getReviews);
 app.post("/reviews", postReview);
+app.use("/api/student", imagekitRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

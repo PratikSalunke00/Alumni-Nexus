@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import DashboardShell from '../../components/DashboardShell';
 import toast, { Toaster } from 'react-hot-toast';
+import { upload } from '@imagekit/javascript';
 
 const API_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -149,7 +150,7 @@ const Field = ({
   </label>
 );
 
-const TextArea = ({ label, value, onChange, placeholder }) => (
+const TextArea = ({ label, value, onChange, placeholder, disabled = false }) => (
   <label className="block">
     <span className="mb-1.5 block text-sm font-medium text-slate-700">
       {label}
@@ -158,6 +159,7 @@ const TextArea = ({ label, value, onChange, placeholder }) => (
       value={value ?? ''}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
+      disabled={disabled}
       rows={4}
       className="w-full resize-y rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
     />
@@ -205,7 +207,16 @@ const StudentProfile = () => {
         const saved = data.profile || data.student || data;
 
         if (mounted) {
-          const nextProfile = { ...emptyProfile, ...saved };
+          const nextProfile = {
+            ...emptyProfile,
+            ...saved,
+            education: Array.isArray(saved.education) ? saved.education : [],
+            skills: Array.isArray(saved.skills) ? saved.skills : [],
+            projects: Array.isArray(saved.projects) ? saved.projects : [],
+            certifications: Array.isArray(saved.certifications)
+              ? saved.certifications
+              : [],
+          };
 
           setProfile(nextProfile);
           setDraft(nextProfile);
@@ -338,7 +349,7 @@ const StudentProfile = () => {
         [`Project ${index + 1} live URL`, project.liveUrl],
       ]),
       ...draft.certifications.map((item, index) => [
-        [`Certification ${index + 1} credential URL`],
+        `Certification ${index + 1} credential URL`,
         item.credentialUrl,
       ]),
     ];
@@ -374,6 +385,12 @@ const StudentProfile = () => {
       const nextProfile = {
         ...draft,
         ...saved,
+        education: Array.isArray(saved.education) ? saved.education : draft.education,
+        skills: Array.isArray(saved.skills) ? saved.skills : draft.skills,
+        projects: Array.isArray(saved.projects) ? saved.projects : draft.projects,
+        certifications: Array.isArray(saved.certifications)
+          ? saved.certifications
+          : draft.certifications,
       };
 
       setProfile(nextProfile);
@@ -391,43 +408,68 @@ const StudentProfile = () => {
   };
 
   const handleUpload = async (event, kind) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
+  const file = event.target.files?.[0];
+  event.target.value = '';
 
-    if (!file) return;
+  if (!file) return;
 
-    const isPhoto = kind === 'photo';
-    const allowedTypes = isPhoto
-      ? ['image/jpeg', 'image/png', 'image/webp']
-      : ['application/pdf'];
+  const isPhoto = kind === 'photo';
 
-    if (!allowedTypes.includes(file.type)) {
-      toast.error(
-        isPhoto
-          ? 'Choose a JPG, PNG, or WebP image.'
-          : 'Please select a PDF resume.'
+  const allowedTypes = isPhoto
+    ? ['image/jpeg', 'image/png', 'image/webp']
+    : ['application/pdf'];
+
+  if (!allowedTypes.includes(file.type)) {
+    toast.error(
+      isPhoto
+        ? 'Choose a JPG, PNG, or WebP image.'
+        : 'Please select a PDF resume.'
+    );
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('The maximum file size is 5 MB.');
+    return;
+  }
+
+  const previewUrl = URL.createObjectURL(file);
+
+  if (isPhoto) setPhotoPreview(previewUrl);
+  else setResumePreview(previewUrl);
+
+  setUploading(kind);
+
+  try {
+    let uploadedUrl;
+
+    if (isPhoto) {
+      // 1. Get secure upload credentials from your backend
+      const { data: auth } = await axios.get(
+        `${API_URL}/api/student/imagekit-auth/auth`,
+        getConfig()
       );
-      return;
-    }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('The maximum file size is 5 MB.');
-      return;
-    }
+      // 2. Upload the image directly to ImageKit
+      const result = await upload({
+        file,
+        fileName: file.name,
+        token: auth.token,
+        signature: auth.signature,
+        expire: auth.expire,
+        publicKey: auth.publicKey,
+        folder: '/student-profiles',
+        useUniqueFileName: true,
+      });
 
-    const previewUrl = URL.createObjectURL(file);
+      uploadedUrl = result.url;
+    } else {
+      // Keep your existing backend resume-upload flow
+      const formData = new FormData();
+      formData.append('resume', file);
 
-    if (isPhoto) setPhotoPreview(previewUrl);
-    else setResumePreview(previewUrl);
-
-    const formData = new FormData();
-    formData.append(isPhoto ? 'photo' : 'resume', file);
-
-    setUploading(kind);
-
-    try {
       const { data } = await axios.post(
-        `${API_URL}/api/student/profile/${kind}`,
+        `${API_URL}/api/student/profile/resume`,
         formData,
         {
           ...getConfig(),
@@ -438,34 +480,34 @@ const StudentProfile = () => {
         }
       );
 
-      const uploadedUrl =
-        data.url || data.photo || data.resume ||
-        data.profile?.[isPhoto ? 'photo' : 'resume'];
-
-      if (!uploadedUrl) {
-        throw new Error(
-          'Upload succeeded without returning a file URL.'
-        );
-      }
-
-      updateField(isPhoto ? 'photo' : 'resume', uploadedUrl);
-
-      if (isPhoto) setPhotoPreview(uploadedUrl);
-      else setResumePreview(uploadedUrl);
-
-      toast.success(
-        `${isPhoto ? 'Profile photo' : 'Resume'} uploaded. Save your profile to keep the changes.`
-      );
-    } catch (error) {
-      if (isPhoto) setPhotoPreview(draft.photo || '');
-      else setResumePreview(draft.resume || '');
-
-      toast.error(getErrorMessage(error));
-    } finally {
-      URL.revokeObjectURL(previewUrl);
-      setUploading('');
+      uploadedUrl =
+        data.url || data.resume || data.profile?.resume;
     }
-  };
+
+    if (!uploadedUrl) {
+      throw new Error('Upload completed without returning a file URL.');
+    }
+
+    // 3. Store the URL in the profile draft
+    updateField(isPhoto ? 'photo' : 'resume', uploadedUrl);
+
+    if (isPhoto) setPhotoPreview(uploadedUrl);
+    else setResumePreview(uploadedUrl);
+
+    toast.success(
+      `${isPhoto ? 'Profile photo' : 'Resume'} uploaded. Save your profile to keep the changes.`
+    );
+  } catch (error) {
+    if (isPhoto) setPhotoPreview(draft.photo || '');
+    else setResumePreview(draft.resume || '');
+
+    toast.error(getErrorMessage(error));
+  } finally {
+    URL.revokeObjectURL(previewUrl);
+    setUploading('');
+  }
+};
+  
 
   const removeUpload = async (kind) => {
     if (
@@ -607,6 +649,7 @@ const StudentProfile = () => {
             value={draft.about}
             onChange={(v) => updateField('about', v)}
             placeholder="Describe your skills, interests, projects, and career goals..."
+            disabled={!editing}
           />
           {!editing && (
             <p className="mt-1 text-xs text-slate-400">
@@ -853,6 +896,7 @@ const StudentProfile = () => {
                       updateEntry('projects', index, 'description', v)
                     }
                     placeholder="Explain the problem, features, and your contribution."
+                    disabled={!editing}
                   />
                 </div>
               </div>
