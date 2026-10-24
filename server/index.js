@@ -4,6 +4,10 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import connectDB from "./db.js";
+import { getHome, getHealth } from "./controller/health.js";
+import {checkJWT} from "./middleware/jwt.js";
+
+
 
 
 dotenv.config();
@@ -13,6 +17,12 @@ app.use(express.json());
 app.use(cors());
 
 const PORT = process.env.PORT || 8080;
+
+app.get("/health",getHealth)
+app.get("/", getHome)
+
+
+
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

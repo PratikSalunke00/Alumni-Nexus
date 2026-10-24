@@ -110,7 +110,7 @@ function Profile() {
   };
 
   useEffect(() => {
-    setPageTitle("Smart Campus- Profile");
+    setPageTitle("Alumni Nexus - Profile");
   }, []);
 
   useEffect(() => {

@@ -1,128 +1,68 @@
-import { Link } from "react-router";
-import {
-  ShoppingCartIcon,
-  Bars3Icon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import { useState, useEffect } from "react";
-import Avatar from "./Avatar";
-import { getUserData, logOutUser } from "../utils";
-import Button from "../components/Button"
+import { Link } from 'react-router';
+import { useState } from 'react';
+import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
-
-const Navbar = ({ refreshCart }) => {
+const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-   const [cartItems,setCartItems]=useState([]);
-    const [userData, setUserData] = useState({});
 
-useEffect(() => {
-  const data = getUserData();
-  setUserData(data || {});
-}, []);
-
-
-useEffect(() => {
-  const existingCart =
-  JSON.parse(localStorage.getItem("cartItems")) || [];
-  setCartItems(existingCart);
-}, [refreshCart]);
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Students', path: '/student/dashboard' },
+    { label: 'Alumni', path: '/alumni/dashboard' },
+    { label: 'Admin', path: '/admin/dashboard' },
+  ];
 
   return (
-    <nav className="bg-blue-600 text-white px-5 py-4">
-      <div className="flex justify-between items-center">
-       
-        <h1 className="text-xl font-bold">
-          <Link to="/" className="hover:text-yellow-300">Smart Campus</Link>
-        </h1>
-
-        
-        <div className="hidden md:flex space-x-6 items-center">
-           <Link to="/about" className="hover:text-yellow-300">About</Link>
-          <Link to="/Scholership" className="hover:text-yellow-300">Scholarship</Link>
-          <Link to="/StationaryStore" className="hover:text-yellow-300">Store</Link>
-          <Link to="/Pyq" className="hover:text-yellow-300">PYQ's</Link>
-           <Link to="/contact" className="hover:text-yellow-300">Contact</Link>
-           <Link to="/StudyMaterial" className="hover:text-yellow-300">StudyMaterial</Link>
-          
-
-          
+    <header className="border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <Link to="/" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-lg font-bold text-white">A</div>
           <div>
-            {userData?.name ? (
-              <div className="flex items-center gap-2 hidden md:flex">
-                <Link to="/profile" className="flex items-center gap-1">
-                  {userData?.photos?.length > 0 ? (
-                    <img
-                      src={userData.photos[0]}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full object-cover hidden md:flex "
-                    />
-                  ) : (
-                    <Avatar name={userData.name} />
-                  )}
-                  <span className="text-sm md:text-lg">Hello, {userData.name}</span>
-                </Link>
-
-                <Button
-                  title="Logout"
-                  varient="primary"
-                  onClick={logOutUser}
-                />
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="hidden md:block bg-blue-500 text-white md:px-3 px-1 md:py-1 py-0.5 text-sm rounded hover:bg-blue-600"
-              >
-                Login
-              </Link>
-            )}
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">College network</p>
+            <p className="text-lg font-semibold text-slate-900">Alumni Nexus</p>
           </div>
+        </Link>
 
-         
-          <Link to="/cart" className="relative ml-4">
-            <ShoppingCartIcon className="w-6 h-6 hover:text-yellow-300" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-xs w-5 h-5 rounded-full flex items-center justify-center">
-              {cartItems.length}
-            </span>
-          </Link>
+        <div className="hidden items-center gap-7 md:flex">
+          {navItems.map((item) => (
+            <Link key={item.label} to={item.path} className="text-sm font-medium text-slate-600 transition hover:text-indigo-600">
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="hidden items-center gap-3 md:flex">
+          <button className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700">
+            <BellIcon className="h-5 w-5" />
+          </button>
+          <Link to="/login" className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700">Login</Link>
+          <Link to="/signup" className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">Sign up</Link>
         </div>
 
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden"
+          type="button"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 md:hidden"
+          aria-label="Toggle navigation"
         >
-          {menuOpen ? (
-            <XMarkIcon className="w-7 h-7" />
-          ) : (
-            <Bars3Icon className="w-7 h-7" />
-          )}
+          {menuOpen ? <XMarkIcon className="h-5 w-5" /> : <Bars3Icon className="h-5 w-5" />}
         </button>
-      </div>
+      </nav>
 
-      
       {menuOpen && (
-        <div className="md:hidden mt-4 space-y-4 pb-4">
-          <Link onClick={() => setMenuOpen(false)} to="/about" className="block hover:text-yellow-300">About</Link>
-          <Link onClick={() => setMenuOpen(false)} to="/Scholership" className="block hover:text-yellow-300">Scholarship</Link>
-          <Link onClick={() => setMenuOpen(false)} to="/StationaryStore" className="block hover:text-yellow-300">Store</Link>
-           <Link onClick={() => setMenuOpen(false)} to="/Pyq" className="block hover:text-yellow-300">PYQ's</Link>
-           <Link onClick={() => setMenuOpen(false)} to="/StudyMaterial" className="block hover:text-yellow-300">StudyMaterial</Link>
-           <Link onClick={() => setMenuOpen(false)} to="/contact" className="block hover:text-yellow-300">Contact</Link>
-          <Link onClick={() => setMenuOpen(false)} to="/login" className="block hover:text-yellow-300">Login</Link>
-
-          <Link
-            onClick={() => setMenuOpen(false)}
-            to="/cart"
-            className="flex items-center gap-2 relative"
-          >
-            <ShoppingCartIcon className="w-6 h-6" />
-            <span className="bg-red-500 text-xs w-5 h-5 rounded-full flex items-center justify-center">
-              {cartItems.length}
-            </span>
-          </Link>
+        <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
+          <div className="flex flex-col gap-3">
+            {navItems.map((item) => (
+              <Link key={item.label} onClick={() => setMenuOpen(false)} to={item.path} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600">
+                {item.label}
+              </Link>
+            ))}
+            <Link onClick={() => setMenuOpen(false)} to="/login" className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">Login</Link>
+            <Link onClick={() => setMenuOpen(false)} to="/signup" className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white">Sign up</Link>
+          </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 };
 
