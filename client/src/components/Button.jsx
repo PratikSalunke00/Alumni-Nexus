@@ -9,19 +9,19 @@ function Button({ title, size = "sm", varient = "primary", onClick }) {
   };
 
   const variant_classes = {
-    primary: "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-400",
-    secondary: "bg-blue-500 text-white hover:bg-gray-600 focus:ring-gray-400",
+    primary: "bg-sky-500 text-white hover:bg-sky-600 focus:ring-sky-400",
+    secondary: "bg-sky-500 text-white hover:bg-gray-600 focus:ring-gray-400",
     danger: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-400",
-    outline: "border border-blue-500 text-blue-500 hover:bg-blue-50 focus:ring-blue-400",
-    pink: "bg-blue-600 text-white hover:bg-blue-700"
+    outline: "border border-sky-500 text-sky-500 hover:bg-sky-50 focus:ring-sky-400",
+    pink: "bg-sky-600 text-white hover:bg-sky-700"
   };
 
   return (
     <div>
       <button
-        className={`px-6  bg-blue-500 text-white font-semibold rounded-lg 
-             hover:bg-blue-600 transition duration-200 
-             focus:outline-none focus:ring-2 focus:ring-blue-400 ${size_classes[size]} ${variant_classes[varient]}`}
+        className={`px-6  bg-sky-500 text-white font-semibold rounded-lg 
+             hover:bg-sky-600 transition duration-200 
+             focus:outline-none focus:ring-2 focus:ring-sky-400 ${size_classes[size]} ${variant_classes[varient]}`}
         onClick={onClick}
       >
         {title}
