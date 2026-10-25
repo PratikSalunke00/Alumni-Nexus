@@ -1,6 +1,6 @@
 import React from "react";
 
-function Input2({
+function Input({
   type,
   placeholder,
   value,
@@ -24,4 +24,4 @@ function Input2({
   );
 }
 
-export default Input2;
+export default Input;

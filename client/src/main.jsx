@@ -1,23 +1,23 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router";
 import "./index.css";
-import LandingPage from "./pages/LandingPage.jsx";
-import Login from "./views/Login.jsx";
-import SignUp from "./views/SignUp.jsx";
-import StudentDashboard from "./pages/student/StudentDashboard.jsx";
-import AlumniDashboard from "./pages/alumni/AlumniDashboard.jsx";
-import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import LandingPage from "./views/LandingPage.jsx";
+import Login from "./views/auth/Login.jsx";
+import SignUp from "./views/auth/Signup.jsx";
+import StudentDashboard from "./views/student/StudentDashboard.jsx";
+import AlumniDashboard from "./views/alumni/AlumniDashboard.jsx";
+import AdminDashboard from "./views/admin/AdminDashboard.jsx";
 import Profile from "./views/Profile.jsx";
-import AdminVerificationQueue from "./pages/admin/AdminVerificationQueue.jsx";
-import StudentOpportunitiesPage from "./pages/student/StudentOpportunitiesPage.jsx";
-import StudentReferralsPage from "./pages/student/StudentReferralsPage.jsx";
-import StudentMentorshipPage from "./pages/student/StudentMentorshipPage.jsx";
-import AlumniOpportunitiesPage from "./pages/alumni/AlumniOpportunitiesPage.jsx";
-import AlumniReferralsPage from "./pages/alumni/AlumniReferralsPage.jsx";
-import AlumniMentorshipPage from "./pages/alumni/AlumniMentorshipPage.jsx";
+import AdminVerificationQueue from "./views/admin/AdminVerificationQueue.jsx";
+import StudentOpportunitiesPage from "./views/student/StudentOpportunitiesPage.jsx";
+import StudentReferralsPage from "./views/student/StudentReferralsPage.jsx";
+import StudentMentorshipPage from "./views/student/StudentMentorshipPage.jsx";
+import AlumniOpportunitiesPage from "./views/alumni/AlumniOpportunitiesPage.jsx";
+import AlumniReferralsPage from "./views/alumni/AlumniReferralsPage.jsx";
+import AlumniMentorshipPage from "./views/alumni/AlumniMentorshipPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import DashboardShell from "./components/DashboardShell.jsx";
-import StudentProfile from "./pages/student/StudentProfile";
+import StudentProfile from "./views/student/StudentProfile.jsx";
 
 const DashboardPlaceholderPage = ({
   role,

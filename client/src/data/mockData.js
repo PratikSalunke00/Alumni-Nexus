@@ -1,54 +1,121 @@
+
 export const studentStats = [
-  { label: 'Matching opportunities', value: '24', detail: 'New this week' },
-  { label: 'Active referrals', value: '06', detail: '2 awaiting response' },
-  { label: 'Mentorship slots', value: '03', detail: 'Next session Tue' },
+  { title: "Alumni Connections", value: "24", change: "+4 this month" },
+  { title: "Job Opportunities", value: "12", change: "5 new opportunities" },
+  { title: "Mentorship Sessions", value: "8", change: "2 upcoming" },
+  { title: "Applications Sent", value: "6", change: "2 under review" },
 ];
 
 export const featuredOpportunities = [
-  { title: 'Software Engineer Intern', company: 'Google', type: 'Internship', location: 'Bengaluru', match: '92%' },
-  { title: 'Product Analyst', company: 'Microsoft', type: 'Full Time', location: 'Hyderabad', match: '88%' },
-  { title: 'Data Analyst', company: 'Amazon', type: 'Internship', location: 'Remote', match: '84%' },
+  {
+    id: 1,
+    title: "MERN Stack Developer",
+    company: "Tech Solutions",
+    type: "Full-time",
+    location: "Pune, India",
+  },
+  {
+    id: 2,
+    title: "Software Developer Intern",
+    company: "Innovate Labs",
+    type: "Internship",
+    location: "Remote",
+  },
 ];
 
 export const alumniRecommendations = [
-  { name: 'Aisha Patel', company: 'Meta', role: 'Software Engineer', track: 'CSE' },
-  { name: 'Rohit Sharma', company: 'PayPal', role: 'Frontend Engineer', track: 'IT' },
-  { name: 'Neha Verma', company: 'Deloitte', role: 'Consultant', track: 'MBA' },
+  {
+    id: 1,
+    name: "Rahul Sharma",
+    role: "Software Engineer",
+    company: "Infosys",
+    skills: ["Java", "React", "Node.js"],
+  },
+  {
+    id: 2,
+    name: "Priya Patil",
+    role: "Full Stack Developer",
+    company: "TCS",
+    skills: ["MERN", "MongoDB", "AWS"],
+  },
 ];
 
 export const recentUpdates = [
-  { title: 'Referral request accepted', company: 'Zomato', status: 'Accepted' },
-  { title: 'Resume review scheduled', company: 'Infosys', status: 'Booked' },
-  { title: 'Mock interview reminder', company: 'Oracle', status: 'Upcoming' },
+  {
+    id: 1,
+    title: "New alumni joined your network",
+    description: "Connect with alumni from your department.",
+    time: "2 hours ago",
+  },
+  {
+    id: 2,
+    title: "New job opportunity posted",
+    description: "A new software development role is available.",
+    time: "Yesterday",
+  },
 ];
 
 export const alumniStats = [
-  { label: 'Opportunities posted', value: '18', detail: 'Across 6 companies' },
-  { label: 'Pending requests', value: '11', detail: '3 need review' },
-  { label: 'Mentorship sessions', value: '09', detail: 'This month' },
+  { title: "Students Connected", value: "48", change: "+8 this month" },
+  { title: "Mentorship Requests", value: "6", change: "3 pending" },
+  { title: "Sessions Completed", value: "15", change: "This semester" },
+  { title: "Opportunities Shared", value: "9", change: "2 this week" },
 ];
 
 export const mentorshipRequests = [
-  { student: 'Ananya Iyer', topic: 'Resume review', time: 'Today, 6:00 PM' },
-  { student: 'Karan Bose', topic: 'Career roadmap', time: 'Thu, 11:30 AM' },
-  { student: 'Meera Singh', topic: 'Mock interview prep', time: 'Fri, 3:00 PM' },
+  {
+    id: 1,
+    name: "Aditi Sharma",
+    branch: "Electronics & Computer Engineering",
+    topic: "Full Stack Development",
+    status: "Pending",
+  },
+  {
+    id: 2,
+    name: "Amit Patil",
+    branch: "Computer Engineering",
+    topic: "Java and DSA",
+    status: "Pending",
+  },
 ];
 
 export const adminStats = [
-  { label: 'Registered students', value: '4,280', detail: '+128 this month' },
-  { label: 'Registered alumni', value: '612', detail: '59 pending review' },
-  { label: 'Active opportunities', value: '143', detail: 'Across 26 domains' },
+  { title: "Total Users", value: "256", change: "+12 this week" },
+  { title: "Students", value: "180", change: "Registered students" },
+  { title: "Alumni", value: "68", change: "Registered alumni" },
+  { title: "Pending Approvals", value: "8", change: "Requires review" },
 ];
 
 export const userTable = [
-  { name: 'Ananya Iyer', role: 'Student', status: 'Verified', department: 'CSE' },
-  { name: 'Rohit Sharma', role: 'Alumni', status: 'Pending', department: 'IT' },
-  { name: 'Neha Verma', role: 'Admin', status: 'Verified', department: 'Placement Cell' },
-  { name: 'Karan Bose', role: 'Student', status: 'Flagged', department: 'EEE' },
+  {
+    id: 1,
+    name: "Aditi Sharma",
+    email: "aditi@example.com",
+    role: "Student",
+    status: "Active",
+  },
+  {
+    id: 2,
+    name: "Rahul Sharma",
+    email: "rahul@example.com",
+    role: "Alumni",
+    status: "Active",
+  },
 ];
 
 export const opportunityModeration = [
-  { title: 'Frontend Developer', company: 'NEXA Labs', status: 'Approved' },
-  { title: 'Data Analyst', company: 'BrightPath', status: 'Reviewing' },
-  { title: 'UI Designer', company: 'Pixel Forge', status: 'Needs update' },
+  {
+    id: 1,
+    title: "Frontend Developer Intern",
+    company: "Tech Solutions",
+    postedBy: "Rahul Sharma",
+    status: "Pending",
+  },
+  {
+    id: 2,
+    title: "Java Developer",
+    company: "Innovate Labs",
+    postedBy: "Priya Patil",
+    status: "Pending",
+  },
 ];

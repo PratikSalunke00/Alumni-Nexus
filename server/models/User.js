@@ -1,146 +1,104 @@
-import { Schema, model } from "mongoose";
 
-const userSchema = new Schema({
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
+      type: String,
+      required: true,
+      trim: true,
     },
+
     email: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    mobile: {
-        type: Number,
+
+    password: {
+      type: String,
+      required: true,
+      minlength: 8,
+      select: false,
     },
-    city: {
-        type: String,
-    },
-    country: {
-        type: String,
-    },
-    pincode: {
-        type: Number,
-    },
-    whatsappNumber: {
-        type: Number,
-    },
-    address: {
-        type: String,
-    },
+
     role: {
       type: String,
       enum: ["student", "alumni", "admin"],
+      required: true,
       default: "student",
     },
-    department: {
+
+    collegeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "College",
+      required: true,
+      index: true,
+    },
+
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: "pending",
+    },
+
+    profilePhoto: {
       type: String,
       default: "",
     },
+
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     branch: {
       type: String,
       default: "",
+      trim: true,
     },
+
     graduationYear: {
       type: Number,
       default: null,
     },
+
     company: {
       type: String,
       default: "",
+      trim: true,
     },
-    designation: {
+
+    jobTitle: {
       type: String,
       default: "",
+      trim: true,
     },
-    experience: {
-      type: Number,
-      default: 0,
-    },
-    bio: {
-      type: String,
-      default: "",
-    },
+
     skills: {
       type: [String],
       default: [],
     },
-    projects: {
-      type: [String],
-      default: [],
-    },
-    certifications: {
-      type: [String],
-      default: [],
-    },
-    github: {
+
+    bio: {
       type: String,
       default: "",
+      maxlength: 1000,
     },
-    portfolio: {
-      type: String,
-      default: "",
-    },
-    linkedin: {
-      type: String,
-      default: "",
-    },
-    preferredRoles: {
-      type: [String],
-      default: [],
-    },
-    locations: {
-      type: [String],
-      default: [],
-    },
-    careerInterests: {
-      type: [String],
-      default: [],
-    },
-    mentorshipAvailable: {
+
+    isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
-    referralPreference: {
-      type: String,
-      default: "",
-    },
-    profileVisibility: {
-      type: String,
-      enum: ["public", "private", "college"],
-      default: "public",
-    },
-    profileImage: {
-      type: String,
-      default: "",
-    },
-    resumeUrl: {
-      type: String,
-      default: "",
-    },
-    verified: {
-      type: Boolean,
-      default: false,
-    },
-    verificationStatus: {
-      type: String,
-      enum: ["unverified", "pending", "verified", "rejected"],
-      default: "unverified",
-    },
-    collegeEmail: {
-      type: String,
-      default: "",
-    },
-    password: {
-        type: String,
-        required: true,
-    },
-    photos: {
-        type: [String],
-        default: [],
-    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-}, { timestamps: true })
+const User = mongoose.model("User", userSchema);
 
-const User = model("User", userSchema);
-
-export default User
+export default User;
