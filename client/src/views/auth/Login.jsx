@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,15 +7,24 @@ import { setPageTitle, isUserLoggedIn } from "../../utils.jsx";
 import Input from "../../components/Input.jsx";
 import backicon from "../../assets/back.png";
 
+// Redirect users according to their role
 function getDashboardPath(role) {
-  switch (role?.toLowerCase()) {
+  const normalizedRole = String(role || "")
+    .toLowerCase()
+    .trim();
+
+  switch (normalizedRole) {
     case "student":
       return "/student/dashboard";
+
     case "alumni":
       return "/alumni/dashboard";
+
     case "admin":
       return "/admin/dashboard";
+
     default:
+      console.error("Unknown user role:", role);
       return "/login";
   }
 }
@@ -30,25 +38,42 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Set page title and redirect an already logged-in user
   useEffect(() => {
     setPageTitle("Login");
 
-    if (isUserLoggedIn()) {
-      const storedUser = JSON.parse(
-        localStorage.getItem("userData") || "{}"
-      );
+    if (!isUserLoggedIn()) {
+      return;
+    }
 
-      const role = localStorage.getItem("role") || storedUser.role;
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("userData") || "{}");
 
-      navigate(getDashboardPath(role), { replace: true });
+      const role = (localStorage.getItem("role") || storedUser.role || "")
+        .toLowerCase()
+        .trim();
+
+      const dashboardPath = getDashboardPath(role);
+
+      if (dashboardPath !== "/login") {
+        navigate(dashboardPath, { replace: true });
+      }
+    } catch (error) {
+      console.error("Unable to read saved user data:", error);
     }
   }, [navigate]);
 
+  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
+  // Handle login submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -63,26 +88,49 @@ function Login() {
       const baseURL = import.meta.env.VITE_API_BASE_URL;
 
       if (!baseURL) {
-        throw new Error("VITE_API_BASE_URL is not configured.");
+        throw new Error(
+          "VITE_API_BASE_URL is not configured in your .env file.",
+        );
       }
 
-      const res = await axios.post(`${baseURL}/api/auth/login`, {
-        email: form.email.trim().toLowerCase(),
-        password: form.password,
-      });
+      const res = await axios.post(
+        `${baseURL.replace(/\/+$/, "")}/api/auth/login`,
+        {
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+        },
+      );
 
-      const data = res.data;
+      const data = res.data || {};
+      console.log("Full login response:", data);
+      console.log("User role:", data.user?.role || data.role);
+      console.log("Token:", data.token);
       const user = data.user || {};
 
-      const role = (user.role || data.role || "").toLowerCase();
+      const role = String(user.role || data.role || "")
+        .toLowerCase()
+        .trim();
+
       const userId = user.id || user._id || data.userId;
       const token = data.token;
       const name = user.name || data.name;
 
+      // Validate the backend response
       if (!token || !role || !userId) {
-        throw new Error("The server returned incomplete login information.");
+        console.error("Login response:", data);
+
+        throw new Error(
+          "Login response is missing the token, user ID, or role. Check your backend response.",
+        );
       }
 
+      const dashboardPath = getDashboardPath(role);
+
+      if (dashboardPath === "/login") {
+        throw new Error(`Unsupported user role: ${role}`);
+      }
+
+      // Save authentication information
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("userId", String(userId));
@@ -98,9 +146,10 @@ function Login() {
           id: String(userId),
           role,
           name,
-        })
+        }),
       );
 
+      // Save college ID if provided by the backend
       if (user.collegeId) {
         const collegeId =
           typeof user.collegeId === "object"
@@ -112,14 +161,20 @@ function Login() {
         }
       }
 
+      console.log("Logged-in role:", role);
+      console.log("Redirecting to:", dashboardPath);
+
       toast.success(data.message || "Login successful!");
-      navigate(getDashboardPath(role), { replace: true });
+
+      navigate(dashboardPath, { replace: true });
     } catch (error) {
+      console.error("Login error:", error.response?.data || error);
+
       toast.error(
         error.response?.data?.message ||
           error.response?.data?.error ||
           error.message ||
-          "Login failed. Please check your credentials."
+          "Login failed. Please check your credentials.",
       );
     } finally {
       setLoading(false);
@@ -141,9 +196,7 @@ function Login() {
           onSubmit={handleSubmit}
           className="flex w-full max-w-md flex-col items-center justify-center rounded-xl border border-green-300 bg-white p-6 shadow-xl sm:p-8"
         >
-          <h1 className="mb-7 text-3xl font-semibold text-green-700">
-            Login
-          </h1>
+          <h1 className="mb-7 text-3xl font-semibold text-green-700">Login</h1>
 
           <div className="w-full space-y-4">
             <Input

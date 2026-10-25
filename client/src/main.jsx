@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import LandingPage from "./views/LandingPage.jsx";
 import Login from "./views/auth/Login.jsx";
@@ -46,8 +46,15 @@ createRoot(document.getElementById("root")).render(
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
 
-      <Route path="/student/profile" element={<StudentProfile />} />
-      
+      <Route
+        path="/student/profile"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/profile"
         element={
@@ -64,14 +71,7 @@ createRoot(document.getElementById("root")).render(
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/student/profile"
-        element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
+      
       <Route
         path="/student/messages"
         element={
