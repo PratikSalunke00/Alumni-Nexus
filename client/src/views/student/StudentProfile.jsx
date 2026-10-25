@@ -7,7 +7,7 @@ import { upload } from '@imagekit/javascript';
 import StudentNavbar from '../../components/studentNavbar';
 
 const API_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const emptyProfile = {
   fullName: '',
@@ -201,7 +201,7 @@ const StudentProfile = () => {
 
       try {
         const { data } = await axios.get(
-          `${API_URL}/api/student/profile`,
+          `${API_URL}/api/student/profile/me`,
           getConfig()
         );
 
@@ -376,7 +376,7 @@ const StudentProfile = () => {
 
     try {
       const { data } = await axios.put(
-        `${API_URL}/api/student/profile`,
+        `${API_URL}/api/student/profile/me`,
         draft,
         getConfig()
       );

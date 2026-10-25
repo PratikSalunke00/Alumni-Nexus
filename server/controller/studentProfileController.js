@@ -30,7 +30,7 @@ const profileFields = [
 
 // Your authentication middleware must set req.user.
 const getAuthenticatedUserId = (req) =>
-  req.user?._id || req.user?.id;
+  req.user?.userId || req.user?.id || req.user?._id;
 
 export const getStudentProfile = async (req, res) => {
   try {

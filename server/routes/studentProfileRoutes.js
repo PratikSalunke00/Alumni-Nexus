@@ -12,7 +12,7 @@ import { checkJWT } from '../middleware/jwt.js';
 
 const router = express.Router();
 
-router.get('/profile', checkJWT, getStudentProfile);
-router.put('/profile', checkJWT, saveStudentProfile);
+router.get(['/profile', '/profile/me'], checkJWT, getStudentProfile);
+router.put(['/profile', '/profile/me'], checkJWT, saveStudentProfile);
 
 export default router;
