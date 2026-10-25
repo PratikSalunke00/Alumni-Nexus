@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import VerificationRequest from "../models/VerificationRequest.js";
 
+
 const sanitizeUser = (user) => {
   if (!user) return null;
   const data = user.toObject ? user.toObject() : { ...user };

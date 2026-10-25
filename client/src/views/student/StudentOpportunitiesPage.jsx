@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import DashboardShell from '../../components/DashboardShell';
+import StudentNavbar from '../../components/studentNavbar';
 
 const fallbackOpportunities = [
   { _id: '1', title: 'Software Engineer Intern', company: 'Google', type: 'Internship', location: 'Bengaluru', salary: '₹60k/mo', remote: false, tags: ['JavaScript', 'React', 'DSA'], description: 'Build scalable web products and collaborate with mentors on live projects.' },
@@ -26,6 +27,7 @@ const StudentOpportunitiesPage = () => {
   }, []);
 
   return (
+    <><StudentNavbar/>
     <DashboardShell role="student" pageTitle="Opportunities">
       <div className="space-y-6">
         <section className="rounded-3xl border border-sky-100 bg-sky-50 p-6">
@@ -74,6 +76,7 @@ const StudentOpportunitiesPage = () => {
         </div>
       </div>
     </DashboardShell>
+    </>
   );
 };
 

@@ -1,4 +1,5 @@
 import DashboardShell from '../../components/DashboardShell';
+import StudentNavbar from '../../components/studentNavbar';
 
 const referrals = [
   { id: 1, company: 'Google', role: 'Software Engineer Intern', status: 'Pending', alumni: 'Rohan S.' },
@@ -7,6 +8,7 @@ const referrals = [
 ];
 
 const StudentReferralsPage = () => (
+  <><StudentNavbar/>
   <DashboardShell role="student" pageTitle="Referrals">
     <div className="space-y-6">
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -40,6 +42,7 @@ const StudentReferralsPage = () => (
       </div>
     </div>
   </DashboardShell>
+  </>
 );
 
 export default StudentReferralsPage;

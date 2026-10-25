@@ -1,4 +1,5 @@
 import DashboardShell from '../../components/DashboardShell';
+import StudentNavbar from '../../components/studentNavbar';
 
 const sessions = [
   { id: 1, mentor: 'Rohan S.', topic: 'Career roadmap for product roles', time: 'Today · 6:00 PM', status: 'Confirmed' },
@@ -7,6 +8,7 @@ const sessions = [
 ];
 
 const StudentMentorshipPage = () => (
+  <><StudentNavbar/>
   <DashboardShell role="student" pageTitle="Mentorship">
     <div className="space-y-6">
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -34,6 +36,7 @@ const StudentMentorshipPage = () => (
       </div>
     </div>
   </DashboardShell>
+  </>
 );
 
 export default StudentMentorshipPage;
