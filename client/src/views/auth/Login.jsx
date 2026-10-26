@@ -7,6 +7,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { setPageTitle, isUserLoggedIn } from "../../utils.jsx";
 import Input from "../../components/Input.jsx";
 import backicon from "../../assets/back.png";
+import GoogleSignInButton from "../../components/GoogleSignInButton.jsx";
 
 function getDashboardPath(role) {
   switch (role?.toLowerCase()) {
@@ -44,9 +45,56 @@ function Login() {
     }
   }, [navigate]);
 
+  const saveUserSession = (data) => {
+    const user = data.user || {};
+    const role = (user.role || data.role || "").toLowerCase();
+    const userId = user.userId || user._id || user.id || data.userId;
+    const token = data.token;
+    const name = user.name || data.name;
+
+    if (!token || !role || !userId) {
+      throw new Error("The server returned incomplete login information.");
+    }
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+    localStorage.setItem("userId", String(userId));
+
+    if (name) {
+      localStorage.setItem("name", name);
+    }
+
+    localStorage.setItem(
+      "userData",
+      JSON.stringify({
+        ...user,
+        id: String(userId),
+        role,
+        name,
+      })
+    );
+
+    const collegeId =
+      typeof user.collegeId === "object"
+        ? user.collegeId?._id
+        : user.collegeId;
+
+    if (collegeId) {
+      localStorage.setItem("collegeId", String(collegeId));
+    } else {
+      localStorage.removeItem("collegeId");
+    }
+
+    navigate(getDashboardPath(role), { replace: true });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -57,63 +105,27 @@ function Login() {
       return;
     }
 
+    const baseURL = import.meta.env.VITE_API_BASE_URL;
+
+    if (!baseURL) {
+      toast.error("VITE_API_BASE_URL is not configured.");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const baseURL = import.meta.env.VITE_API_BASE_URL;
-
-      if (!baseURL) {
-        throw new Error("VITE_API_BASE_URL is not configured.");
-      }
-
-      const res = await axios.post(`${baseURL}/api/auth/login`, {
-        email: form.email.trim().toLowerCase(),
-        password: form.password,
-      });
-
-      const data = res.data;
-      const user = data.user || {};
-
-      const role = (user.role || data.role || "").toLowerCase();
-      const userId = user.id || user._id || data.userId;
-      const token = data.token;
-      const name = user.name || data.name;
-
-      if (!token || !role || !userId) {
-        throw new Error("The server returned incomplete login information.");
-      }
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
-      localStorage.setItem("userId", String(userId));
-
-      if (name) {
-        localStorage.setItem("name", name);
-      }
-
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({
-          ...user,
-          id: String(userId),
-          role,
-          name,
-        })
+      const response = await axios.post(
+        `${baseURL}/api/auth/login`,
+        {
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+        }
       );
 
-      if (user.collegeId) {
-        const collegeId =
-          typeof user.collegeId === "object"
-            ? user.collegeId._id
-            : user.collegeId;
+      saveUserSession(response.data);
 
-        if (collegeId) {
-          localStorage.setItem("collegeId", String(collegeId));
-        }
-      }
-
-      toast.success(data.message || "Login successful!");
-      navigate(getDashboardPath(role), { replace: true });
+      toast.success(response.data.message || "Login successful!");
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
@@ -123,6 +135,39 @@ function Login() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleAuthSuccess = (data) => {
+    // A new Google user has no saved role/account yet.
+    if (data.isNewUser) {
+      if (!data.googleCredential || !data.googleProfile) {
+        toast.error(
+          "Google registration information is missing. Please try again."
+        );
+        return;
+      }
+
+      navigate("/signup", {
+        state: {
+          googleRegistration: {
+            credential: data.googleCredential,
+            profile: data.googleProfile,
+          },
+        },
+        replace: true,
+      });
+
+      toast.success("Google verified. Please complete registration.");
+      return;
+    }
+
+    // Existing users are redirected using their database role.
+    try {
+      saveUserSession(data);
+      toast.success(data.message || "Google login successful!");
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
@@ -137,15 +182,12 @@ function Login() {
           />
         </Link>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex w-full max-w-md flex-col items-center justify-center rounded-xl border border-green-300 bg-white p-6 shadow-xl sm:p-8"
-        >
-          <h1 className="mb-7 text-3xl font-semibold text-green-700">
+        <div className="w-full max-w-md rounded-xl border border-green-300 bg-white p-6 shadow-xl sm:p-8">
+          <h1 className="mb-7 text-center text-3xl font-semibold text-green-700">
             Login
           </h1>
 
-          <div className="w-full space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="email"
               name="email"
@@ -171,9 +213,21 @@ function Login() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
+          </form>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-sm text-gray-500">OR</span>
+            <div className="h-px flex-1 bg-gray-200" />
           </div>
 
-          <p className="mt-5 text-sm">
+          <GoogleSignInButton
+            action="login"
+            onSuccess={handleGoogleAuthSuccess}
+            onError={(message) => toast.error(message)}
+          />
+
+          <p className="mt-5 text-center text-sm">
             Don't have an account?{" "}
             <Link
               to="/signup"
@@ -182,7 +236,7 @@ function Login() {
               Sign Up
             </Link>
           </p>
-        </form>
+        </div>
       </div>
 
       <Toaster position="top-right" />

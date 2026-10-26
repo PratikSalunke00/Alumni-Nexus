@@ -16,6 +16,7 @@ import {
   login,
   updateUser,
 } from "./controller/auth.js";
+import { googleAuth } from "./controller/googleAuth.js";
 
 const app = express();
 app.use(express.json());
@@ -27,12 +28,12 @@ app.get("/health", getHealth);
 app.get("/", getHome);
 
 // Authentication routes
+app.post("/api/auth/google", googleAuth);
 app.post("/api/auth/register/student", registerStudent);
 app.post("/api/auth/register/alumni", registerAlumni);
 app.post("/api/auth/register/admin", registerAdmin);
 app.post("/api/auth/login", login);
 
-app.post("/api/auth/login", login);
 app.put("/api/auth/users", checkJWT, updateUser);
 app.get("/api/auth/profile/me", checkJWT, getCurrentProfile);
 app.put("/api/auth/profile/me", checkJWT, updateCurrentProfile);
