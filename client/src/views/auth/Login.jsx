@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,24 +11,73 @@ import GoogleSignInButton from "../../components/GoogleSignInButton.jsx";
 
 // Redirect users according to their role
 function getDashboardPath(role) {
-  const normalizedRole = String(role || "")
-    .toLowerCase()
-    .trim();
+  const normalizedRole = String(role || "").toLowerCase().trim();
 
   switch (normalizedRole) {
     case "student":
       return "/student/dashboard";
-
     case "alumni":
       return "/alumni/dashboard";
-
     case "admin":
       return "/admin/dashboard";
-
     default:
-      console.error("Unknown user role:", role);
       return "/login";
   }
+}
+
+// Save login information for both normal and Google login
+function saveUserSession(data) {
+  const user = data.user || {};
+  const role = String(user.role || data.role || "")
+    .toLowerCase()
+    .trim();
+
+  const userId = user.id || user._id || data.userId;
+  const token = data.token;
+  const name = user.name || data.name;
+
+  if (!token || !role || !userId) {
+    throw new Error(
+      "Login information is incomplete. Please try again."
+    );
+  }
+
+  const dashboardPath = getDashboardPath(role);
+
+  if (dashboardPath === "/login") {
+    throw new Error("Unknown user role. Please contact the administrator.");
+  }
+
+  localStorage.setItem("token", token);
+  localStorage.setItem("role", role);
+  localStorage.setItem("userId", String(userId));
+
+  if (name) {
+    localStorage.setItem("name", name);
+  }
+
+  localStorage.setItem(
+    "userData",
+    JSON.stringify({
+      ...user,
+      id: String(userId),
+      role,
+      name,
+    })
+  );
+
+  const collegeId =
+    typeof user.collegeId === "object"
+      ? user.collegeId?._id
+      : user.collegeId;
+
+  if (collegeId) {
+    localStorage.setItem("collegeId", String(collegeId));
+  } else {
+    localStorage.removeItem("collegeId");
+  }
+
+  return dashboardPath;
 }
 
 function Login() {
@@ -39,18 +89,19 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Set page title and redirect an already logged-in user
   useEffect(() => {
     setPageTitle("Login");
 
-    if (!isUserLoggedIn()) {
-      return;
-    }
+    if (!isUserLoggedIn()) return;
 
     try {
-      const storedUser = JSON.parse(localStorage.getItem("userData") || "{}");
+      const storedUser = JSON.parse(
+        localStorage.getItem("userData") || "{}"
+      );
 
-      const role = (localStorage.getItem("role") || storedUser.role || "")
+      const role = (
+        localStorage.getItem("role") || storedUser.role || ""
+      )
         .toLowerCase()
         .trim();
 
@@ -86,62 +137,30 @@ function Login() {
         throw new Error("VITE_API_BASE_URL is not configured.");
       }
 
-      const res = await axios.post(`${baseURL}/api/auth/login`, {
-        email: form.email.trim().toLowerCase(),
-        password: form.password,
-      });
-
-      const data = res.data;
-      const user = data.user || {};
-
-      const role = (user.role || data.role || "").toLowerCase();
-      const userId = user.id || user._id || data.userId;
-      const token = data.token;
-      const name = user.name || data.name;
-
-      if (!token || !role || !userId) {
-        throw new Error("The server returned incomplete login information.");
-      }
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
-      localStorage.setItem("userId", String(userId));
-
-    if (name) {
-      localStorage.setItem("name", name);
-    }
-
-      localStorage.setItem(
-        "userData",
-        JSON.stringify({
-          ...user,
-          id: String(userId),
-          role,
-          name,
-        })
+      const res = await axios.post(
+        `${baseURL}/api/auth/login`,
+        {
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+        }
       );
 
-      if (user.collegeId) {
-        const collegeId =
-          typeof user.collegeId === "object"
-            ? user.collegeId._id
-            : user.collegeId;
+      const dashboardPath = saveUserSession(res.data);
 
-        if (collegeId) {
-          localStorage.setItem("collegeId", String(collegeId));
-        }
-      }
+      toast.success(res.data.message || "Login successful!");
 
-      toast.success(data.message || "Login successful!");
-      navigate(getDashboardPath(role), { replace: true });
+      navigate(dashboardPath, { replace: true });
     } catch (error) {
-      console.error("Login error:", error.response?.data || error);
+      console.error(
+        "Login error:",
+        error.response?.data || error
+      );
 
       toast.error(
         error.response?.data?.message ||
           error.response?.data?.error ||
           error.message ||
-          "Login failed. Please check your credentials.",
+          "Login failed. Please check your credentials."
       );
     } finally {
       setLoading(false);
@@ -149,7 +168,7 @@ function Login() {
   };
 
   const handleGoogleAuthSuccess = (data) => {
-    // A new Google user has no saved role/account yet.
+    // New Google users must complete registration first.
     if (data.isNewUser) {
       if (!data.googleCredential || !data.googleProfile) {
         toast.error(
@@ -165,19 +184,24 @@ function Login() {
             profile: data.googleProfile,
           },
         },
-        replace: true,
       });
 
-      toast.success("Google verified. Please complete registration.");
+      toast.success(
+        "Google verified. Please complete registration."
+      );
       return;
     }
 
-    // Existing users are redirected using their database role.
+    // Existing Google users
     try {
-      saveUserSession(data);
+      const dashboardPath = saveUserSession(data);
+
       toast.success(data.message || "Google login successful!");
+
+      navigate(dashboardPath, { replace: true });
     } catch (error) {
-      toast.error(error.message);
+      console.error("Google login error:", error);
+      toast.error(error.message || "Google login failed.");
     }
   };
 
@@ -200,7 +224,7 @@ function Login() {
             Login
           </h1>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="w-full space-y-4">
             <Input
               type="email"
               name="email"
@@ -226,19 +250,21 @@ function Login() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
-          </form>
+          </div>
 
-          <div className="my-5 flex items-center gap-3">
+          <div className="my-5 flex w-full items-center gap-3">
             <div className="h-px flex-1 bg-gray-200" />
             <span className="text-sm text-gray-500">OR</span>
             <div className="h-px flex-1 bg-gray-200" />
           </div>
 
-          <GoogleSignInButton
-            action="login"
-            onSuccess={handleGoogleAuthSuccess}
-            onError={(message) => toast.error(message)}
-          />
+          <div className="w-full">
+            <GoogleSignInButton
+              action="login"
+              onSuccess={handleGoogleAuthSuccess}
+              onError={(message) => toast.error(message)}
+            />
+          </div>
 
           <p className="mt-5 text-center text-sm">
             Don't have an account?{" "}
@@ -249,7 +275,7 @@ function Login() {
               Sign Up
             </Link>
           </p>
-        </div>
+        </form>
       </div>
 
       <Toaster position="top-right" />
