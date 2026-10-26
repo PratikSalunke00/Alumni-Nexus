@@ -1,10 +1,11 @@
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import DashboardShell from '../../components/DashboardShell';
 import toast, { Toaster } from 'react-hot-toast';
 import { upload } from '@imagekit/javascript';
 import StudentNavbar from '../../components/studentNavbar';
+import ProfileCompletion from '../../components/ProfileCompletion';
 
 const API_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -83,35 +84,6 @@ const getErrorMessage = (error) =>
   error.message ||
   'Something went wrong. Please try again.';
 
-const completionFields = [
-  'fullName',
-  'email',
-  'mobile',
-  'headline',
-  'about',
-  'city',
-  'state',
-  'country',
-];
-
-const calculateCompletion = (profile) => {
-  const checks = [
-    ...completionFields.map((field) =>
-      Boolean(String(profile[field] || '').trim())
-    ),
-    Boolean(profile.photo),
-    Boolean(profile.education?.length),
-    Boolean(profile.skills?.length),
-    Boolean(profile.projects?.length),
-    Boolean(profile.resume),
-    Boolean(profile.linkedin || profile.github),
-    Boolean(profile.certifications?.length),
-  ];
-
-  const completed = checks.filter(Boolean).length;
-  return Math.round((completed / checks.length) * 100);
-};
-
 const Section = ({ title, description, children }) => (
   <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
     <div className="mb-5">
@@ -151,11 +123,18 @@ const Field = ({
   </label>
 );
 
-const TextArea = ({ label, value, onChange, placeholder, disabled = false }) => (
+const TextArea = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  disabled = false,
+}) => (
   <label className="block">
     <span className="mb-1.5 block text-sm font-medium text-slate-700">
       {label}
     </span>
+
     <textarea
       value={value ?? ''}
       onChange={(event) => onChange(event.target.value)}
@@ -188,11 +167,7 @@ const StudentProfile = () => {
     'Certifications',
   ];
 
-  const completion = useMemo(
-    () => calculateCompletion(draft),
-    [draft]
-  );
-
+  // Load the student's saved profile.
   useEffect(() => {
     let mounted = true;
 
@@ -211,9 +186,15 @@ const StudentProfile = () => {
           const nextProfile = {
             ...emptyProfile,
             ...saved,
-            education: Array.isArray(saved.education) ? saved.education : [],
-            skills: Array.isArray(saved.skills) ? saved.skills : [],
-            projects: Array.isArray(saved.projects) ? saved.projects : [],
+            education: Array.isArray(saved.education)
+              ? saved.education
+              : [],
+            skills: Array.isArray(saved.skills)
+              ? saved.skills
+              : [],
+            projects: Array.isArray(saved.projects)
+              ? saved.projects
+              : [],
             certifications: Array.isArray(saved.certifications)
               ? saved.certifications
               : [],
@@ -233,7 +214,9 @@ const StudentProfile = () => {
           );
         }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -245,14 +228,19 @@ const StudentProfile = () => {
   }, []);
 
   const updateField = (field, value) => {
-    setDraft((previous) => ({ ...previous, [field]: value }));
+    setDraft((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
   };
 
   const updateEntry = (section, index, field, value) => {
     setDraft((previous) => ({
       ...previous,
       [section]: previous[section].map((entry, i) =>
-        i === index ? { ...entry, [field]: value } : entry
+        i === index
+          ? { ...entry, [field]: value }
+          : entry
       ),
     }));
   };
@@ -260,7 +248,10 @@ const StudentProfile = () => {
   const addEntry = (section, entry) => {
     setDraft((previous) => ({
       ...previous,
-      [section]: [...previous[section], { ...entry }],
+      [section]: [
+        ...previous[section],
+        { ...entry },
+      ],
     }));
   };
 
@@ -271,7 +262,9 @@ const StudentProfile = () => {
 
     setDraft((previous) => ({
       ...previous,
-      [section]: previous[section].filter((_, i) => i !== index),
+      [section]: previous[section].filter(
+        (_, i) => i !== index
+      ),
     }));
   };
 
@@ -333,7 +326,6 @@ const StudentProfile = () => {
     }
 
     if (
-      draft.email &&
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email)
     ) {
       toast.error('Please enter a valid email address.');
@@ -362,6 +354,7 @@ const StudentProfile = () => {
 
       try {
         const parsed = new URL(url);
+
         if (!['http:', 'https:'].includes(parsed.protocol)) {
           throw new Error('Invalid URL');
         }
@@ -386,9 +379,15 @@ const StudentProfile = () => {
       const nextProfile = {
         ...draft,
         ...saved,
-        education: Array.isArray(saved.education) ? saved.education : draft.education,
-        skills: Array.isArray(saved.skills) ? saved.skills : draft.skills,
-        projects: Array.isArray(saved.projects) ? saved.projects : draft.projects,
+        education: Array.isArray(saved.education)
+          ? saved.education
+          : draft.education,
+        skills: Array.isArray(saved.skills)
+          ? saved.skills
+          : draft.skills,
+        projects: Array.isArray(saved.projects)
+          ? saved.projects
+          : draft.projects,
         certifications: Array.isArray(saved.certifications)
           ? saved.certifications
           : draft.certifications,
@@ -408,112 +407,104 @@ const StudentProfile = () => {
     }
   };
 
+  const handleUpload = async (event, kind) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
 
-const handleUpload = async (event, kind) => {
-  const file = event.target.files?.[0];
-  event.target.value = '';
+    if (!file) return;
 
-  if (!file) return;
+    const isPhoto = kind === 'photo';
 
-  const isPhoto = kind === 'photo';
+    const allowedTypes = isPhoto
+      ? ['image/jpeg', 'image/png', 'image/webp']
+      : ['application/pdf'];
 
-  // Validate the selected file
-  const allowedTypes = isPhoto
-    ? ['image/jpeg', 'image/png', 'image/webp']
-    : ['application/pdf'];
-
-  if (!allowedTypes.includes(file.type)) {
-    toast.error(
-      isPhoto
-        ? 'Choose a JPG, PNG, or WebP image.'
-        : 'Please select a PDF resume.'
-    );
-    return;
-  }
-
-  // Maximum file size: 5 MB
-  if (file.size > 5 * 1024 * 1024) {
-    toast.error('The maximum file size is 5 MB.');
-    return;
-  }
-
-  const previewUrl = URL.createObjectURL(file);
-
-  if (isPhoto) {
-    setPhotoPreview(previewUrl);
-  } else {
-    setResumePreview(previewUrl);
-  }
-
-  setUploading(kind);
-
-  try {
-    // Step 1: Get secure upload credentials from your backend
-    const { data: auth } = await axios.get(
-      `${API_URL}/api/student/imagekit-auth/auth`,
-      getConfig()
-    );
-
-    if (
-      !auth.token ||
-      !auth.signature ||
-      !auth.expire ||
-      !auth.publicKey
-    ) {
-      throw new Error(
-        'ImageKit authentication credentials are incomplete.'
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(
+        isPhoto
+          ? 'Choose a JPG, PNG, or WebP image.'
+          : 'Please select a PDF resume.'
       );
+      return;
     }
 
-    // Step 2: Upload both images and PDFs directly to ImageKit
-    const result = await upload({
-      file,
-      fileName: file.name,
-      token: auth.token,
-      signature: auth.signature,
-      expire: auth.expire,
-      publicKey: auth.publicKey,
-      folder: isPhoto
-        ? '/student-profiles'
-        : '/student-resumes',
-      useUniqueFileName: true,
-    });
-
-    const uploadedUrl = result.url;
-
-    if (!uploadedUrl) {
-      throw new Error('ImageKit did not return a file URL.');
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('The maximum file size is 5 MB.');
+      return;
     }
 
-    // Step 3: Store the ImageKit URL in the profile draft
-    updateField(isPhoto ? 'photo' : 'resume', uploadedUrl);
+    const previewUrl = URL.createObjectURL(file);
 
     if (isPhoto) {
-      setPhotoPreview(uploadedUrl);
+      setPhotoPreview(previewUrl);
     } else {
-      setResumePreview(uploadedUrl);
+      setResumePreview(previewUrl);
     }
 
-    toast.success(
-      `${isPhoto ? 'Profile photo' : 'Resume'} uploaded successfully. Save your profile to keep the changes.`
-    );
-  } catch (error) {
-    console.error('ImageKit upload error:', error);
+    setUploading(kind);
 
-    if (isPhoto) {
-      setPhotoPreview(draft.photo || '');
-    } else {
-      setResumePreview(draft.resume || '');
+    try {
+      const { data: auth } = await axios.get(
+        `${API_URL}/api/student/imagekit-auth/auth`,
+        getConfig()
+      );
+
+      if (
+        !auth.token ||
+        !auth.signature ||
+        !auth.expire ||
+        !auth.publicKey
+      ) {
+        throw new Error(
+          'ImageKit authentication credentials are incomplete.'
+        );
+      }
+
+      const result = await upload({
+        file,
+        fileName: file.name,
+        token: auth.token,
+        signature: auth.signature,
+        expire: auth.expire,
+        publicKey: auth.publicKey,
+        folder: isPhoto
+          ? '/student-profiles'
+          : '/student-resumes',
+        useUniqueFileName: true,
+      });
+
+      const uploadedUrl = result.url;
+
+      if (!uploadedUrl) {
+        throw new Error('ImageKit did not return a file URL.');
+      }
+
+      updateField(isPhoto ? 'photo' : 'resume', uploadedUrl);
+
+      if (isPhoto) {
+        setPhotoPreview(uploadedUrl);
+      } else {
+        setResumePreview(uploadedUrl);
+      }
+
+      toast.success(
+        `${isPhoto ? 'Profile photo' : 'Resume'} uploaded successfully. Save your profile to keep the changes.`
+      );
+    } catch (error) {
+      console.error('ImageKit upload error:', error);
+
+      if (isPhoto) {
+        setPhotoPreview(draft.photo || '');
+      } else {
+        setResumePreview(draft.resume || '');
+      }
+
+      toast.error(getErrorMessage(error));
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+      setUploading('');
     }
-
-    toast.error(getErrorMessage(error));
-  } finally {
-    URL.revokeObjectURL(previewUrl);
-    setUploading('');
-  }
-};
-
-  
+  };
 
   const removeUpload = async (kind) => {
     if (
@@ -526,8 +517,11 @@ const handleUpload = async (event, kind) => {
 
     updateField(kind === 'photo' ? 'photo' : 'resume', '');
 
-    if (kind === 'photo') setPhotoPreview('');
-    else setResumePreview('');
+    if (kind === 'photo') {
+      setPhotoPreview('');
+    } else {
+      setResumePreview('');
+    }
 
     toast('Removed from the form. Save changes to update your profile.');
   };
@@ -546,6 +540,7 @@ const handleUpload = async (event, kind) => {
           required
           disabled={!editing}
         />
+
         <Field
           label="Email Address"
           type="email"
@@ -555,6 +550,7 @@ const handleUpload = async (event, kind) => {
           required
           disabled={!editing}
         />
+
         <Field
           label="Mobile Number"
           value={draft.mobile}
@@ -562,6 +558,7 @@ const handleUpload = async (event, kind) => {
           placeholder="Enter mobile number"
           disabled={!editing}
         />
+
         <Field
           label="Date of Birth"
           type="date"
@@ -574,6 +571,7 @@ const handleUpload = async (event, kind) => {
           <span className="mb-1.5 block text-sm font-medium text-slate-700">
             Gender
           </span>
+
           <select
             value={draft.gender}
             onChange={(e) => updateField('gender', e.target.value)}
@@ -602,6 +600,7 @@ const handleUpload = async (event, kind) => {
           placeholder="Your city"
           disabled={!editing}
         />
+
         <Field
           label="State"
           value={draft.state}
@@ -609,6 +608,7 @@ const handleUpload = async (event, kind) => {
           placeholder="Your state"
           disabled={!editing}
         />
+
         <Field
           label="Country"
           value={draft.country}
@@ -625,6 +625,7 @@ const handleUpload = async (event, kind) => {
             placeholder="Enter your address"
             disabled={!editing}
           />
+
           {editing && (
             <label className="mt-3 flex items-center gap-2 text-sm text-slate-600">
               <input
@@ -657,6 +658,7 @@ const handleUpload = async (event, kind) => {
             placeholder="Describe your skills, interests, projects, and career goals..."
             disabled={!editing}
           />
+
           {!editing && (
             <p className="mt-1 text-xs text-slate-400">
               Select Edit Profile to update this information.
@@ -701,6 +703,7 @@ const handleUpload = async (event, kind) => {
               <h3 className="font-semibold text-slate-700">
                 Education {index + 1}
               </h3>
+
               {editing && (
                 <button
                   type="button"
@@ -763,6 +766,7 @@ const handleUpload = async (event, kind) => {
               className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800"
             >
               {skill}
+
               {editing && (
                 <button
                   type="button"
@@ -797,6 +801,7 @@ const handleUpload = async (event, kind) => {
               placeholder="e.g. Java, React.js, MongoDB"
               className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-sky-500"
             />
+
             <button
               type="button"
               onClick={addSkill}
@@ -828,6 +833,7 @@ const handleUpload = async (event, kind) => {
                 <h3 className="font-semibold text-slate-700">
                   Project {index + 1}
                 </h3>
+
                 {editing && (
                   <button
                     type="button"
@@ -849,6 +855,7 @@ const handleUpload = async (event, kind) => {
                   placeholder="Project name"
                   disabled={!editing}
                 />
+
                 <Field
                   label="Technologies"
                   value={item.technologies}
@@ -858,6 +865,7 @@ const handleUpload = async (event, kind) => {
                   placeholder="React, Node.js, MongoDB"
                   disabled={!editing}
                 />
+
                 <Field
                   label="GitHub Repository URL"
                   value={item.githubUrl}
@@ -867,6 +875,7 @@ const handleUpload = async (event, kind) => {
                   placeholder="https://github.com/username/project"
                   disabled={!editing}
                 />
+
                 <Field
                   label="Live Demo URL"
                   value={item.liveUrl}
@@ -876,6 +885,7 @@ const handleUpload = async (event, kind) => {
                   placeholder="https://your-project.com"
                   disabled={!editing}
                 />
+
                 <Field
                   label="Start Date"
                   type="date"
@@ -885,6 +895,7 @@ const handleUpload = async (event, kind) => {
                   }
                   disabled={!editing}
                 />
+
                 <Field
                   label="End Date"
                   type="date"
@@ -894,6 +905,7 @@ const handleUpload = async (event, kind) => {
                   }
                   disabled={!editing}
                 />
+
                 <div className="sm:col-span-2">
                   <TextArea
                     label="Project Description"
@@ -938,11 +950,13 @@ const handleUpload = async (event, kind) => {
             <p className="break-words font-medium text-slate-800">
               {draft.resume ? 'Resume uploaded' : 'No resume uploaded'}
             </p>
+
             <p className="mt-1 text-sm text-slate-500">
               {draft.resume
                 ? 'Your resume is available below.'
                 : 'Upload your resume to help alumni understand your experience.'}
             </p>
+
             {draft.resume?.startsWith('http') && (
               <a
                 href={draft.resume}
@@ -959,6 +973,7 @@ const handleUpload = async (event, kind) => {
             <div className="flex flex-wrap gap-2">
               <label className="cursor-pointer rounded-xl bg-sky-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-sky-700">
                 {uploading === 'resume' ? 'Uploading...' : 'Upload PDF'}
+
                 <input
                   type="file"
                   accept=".pdf,application/pdf"
@@ -967,6 +982,7 @@ const handleUpload = async (event, kind) => {
                   onChange={(e) => handleUpload(e, 'resume')}
                 />
               </label>
+
               {draft.resume && (
                 <button
                   type="button"
@@ -1051,6 +1067,7 @@ const handleUpload = async (event, kind) => {
               <h3 className="font-semibold text-slate-700">
                 Certification {index + 1}
               </h3>
+
               {editing && (
                 <button
                   type="button"
@@ -1072,6 +1089,7 @@ const handleUpload = async (event, kind) => {
                 placeholder="e.g. AWS Cloud Practitioner"
                 disabled={!editing}
               />
+
               <Field
                 label="Issuing Organization"
                 value={item.organization}
@@ -1081,6 +1099,7 @@ const handleUpload = async (event, kind) => {
                 placeholder="e.g. AWS, Google, Microsoft"
                 disabled={!editing}
               />
+
               <Field
                 label="Issue Date"
                 type="date"
@@ -1090,6 +1109,7 @@ const handleUpload = async (event, kind) => {
                 }
                 disabled={!editing}
               />
+
               <Field
                 label="Credential URL"
                 type="url"
@@ -1148,9 +1168,11 @@ const handleUpload = async (event, kind) => {
                   {item.degree || 'Degree not specified'}
                   {item.branch ? ` — ${item.branch}` : ''}
                 </h3>
+
                 <p className="mt-1 text-sm text-slate-600">
                   {item.college || 'College not specified'}
                 </p>
+
                 <p className="mt-1 text-xs text-slate-500">
                   {item.startYear || '—'} – {item.graduationYear || 'Present'}
                 </p>
@@ -1194,14 +1216,17 @@ const handleUpload = async (event, kind) => {
                 <h3 className="font-semibold text-slate-800">
                   {item.title || 'Untitled Project'}
                 </h3>
+
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
                   {item.description || 'No description added.'}
                 </p>
+
                 {item.technologies && (
                   <p className="mt-3 text-xs text-sky-700">
                     {item.technologies}
                   </p>
                 )}
+
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
                   {item.githubUrl && (
                     <a
@@ -1213,6 +1238,7 @@ const handleUpload = async (event, kind) => {
                       GitHub ↗
                     </a>
                   )}
+
                   {item.liveUrl && (
                     <a
                       href={item.liveUrl}
@@ -1245,9 +1271,11 @@ const handleUpload = async (event, kind) => {
                 <h3 className="font-semibold text-slate-800">
                   {item.title || 'Untitled achievement'}
                 </h3>
+
                 <p className="mt-1 text-sm text-slate-500">
                   {item.organization}
                 </p>
+
                 {item.credentialUrl && (
                   <a
                     href={item.credentialUrl}
@@ -1274,208 +1302,202 @@ const handleUpload = async (event, kind) => {
     switch (activeTab) {
       case 'Personal Information':
         return renderPersonalInformation();
+
       case 'Education':
         return renderEducation();
+
       case 'Skills & Projects':
         return renderSkillsAndProjects();
+
       case 'Resume & Links':
         return renderResumeAndLinks();
+
       case 'Certifications':
         return renderCertifications();
+
       default:
         return renderOverview();
     }
   };
 
   return (
-    <><StudentNavbar />
-    <DashboardShell role="student" pageTitle="My Profile">
-      
-      <Toaster position="top-right" />
+    <>
+      <StudentNavbar />
 
-      <div className="mx-auto max-w-6xl space-y-6 pb-8">
-        {/* Profile header */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="h-28 bg-gradient-to-r from-sky-600 to-indigo-600 sm:h-36" />
+      <DashboardShell role="student" pageTitle="My Profile">
+        <Toaster position="top-right" />
 
-          <div className="px-5 pb-5 sm:px-7">
-            <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex items-end gap-4">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-sky-50 text-3xl font-bold text-sky-700 shadow-sm sm:h-28 sm:w-28">
-                  {photoPreview ? (
-                    <img
-                      src={photoPreview}
-                      alt="Student profile"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    (draft.fullName?.trim()?.[0] || 'S').toUpperCase()
-                  )}
+        <div className="mx-auto max-w-6xl space-y-6 pb-8">
+          {/* Profile header */}
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="h-28 bg-gradient-to-r from-sky-600 to-indigo-600 sm:h-36" />
+
+            <div className="px-5 pb-5 sm:px-7">
+              <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex items-end gap-4">
+                  <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-sky-50 text-3xl font-bold text-sky-700 shadow-sm sm:h-28 sm:w-28">
+                    {photoPreview ? (
+                      <img
+                        src={photoPreview}
+                        alt="Student profile"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      (draft.fullName?.trim()?.[0] || 'S').toUpperCase()
+                    )}
+                  </div>
+
+                  <div className="min-w-0 pb-1">
+                    <h1 className="break-words text-xl font-bold text-slate-900 sm:text-2xl">
+                      {draft.fullName || 'Your Name'}
+                    </h1>
+
+                    <p className="mt-1 break-all text-sm text-slate-500">
+                      {draft.email || 'Add your email address'}
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-600">
+                      {draft.headline || 'Add your professional headline'}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="min-w-0 pb-1">
-                  <h1 className="break-words text-xl font-bold text-slate-900 sm:text-2xl">
-                    {draft.fullName || 'Your Name'}
-                  </h1>
-                  <p className="mt-1 break-all text-sm text-slate-500">
-                    {draft.email || 'Add your email address'}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {draft.headline || 'Add your professional headline'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-2 sm:pb-1">
-                {!editing ? (
-                  <button
-                    type="button"
-                    onClick={handleEdit}
-                    className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"
-                  >
-                    Edit Profile
-                  </button>
-                ) : (
-                  <>
+                <div className="flex flex-wrap gap-2 pt-2 sm:pb-1">
+                  {!editing ? (
                     <button
                       type="button"
-                      onClick={handleCancel}
-                      disabled={saving || uploading !== ''}
-                      className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      onClick={handleEdit}
+                      className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700"
                     >
-                      Cancel
+                      Edit Profile
                     </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleCancel}
+                        disabled={saving || uploading !== ''}
+                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="submit"
+                        form="student-profile-form"
+                        disabled={saving || uploading !== ''}
+                        className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
+                      >
+                        {saving ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {editing && (
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    {uploading === 'photo' ? 'Uploading...' : 'Change Photo'}
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={uploading !== ''}
+                      onChange={(e) => handleUpload(e, 'photo')}
+                    />
+                  </label>
+
+                  {photoPreview && (
                     <button
-                      type="submit"
-                      form="student-profile-form"
-                      disabled={saving || uploading !== ''}
-                      className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
+                      type="button"
+                      onClick={() => removeUpload('photo')}
+                      className="text-sm font-medium text-red-600 hover:underline"
                     >
-                      {saving ? 'Saving...' : 'Save Changes'}
+                      Remove Photo
                     </button>
-                  </>
-                )}
-              </div>
-            </div>
+                  )}
 
-            {editing && (
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                  {uploading === 'photo' ? 'Uploading...' : 'Change Photo'}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    disabled={uploading !== ''}
-                    onChange={(e) => handleUpload(e, 'photo')}
-                  />
-                </label>
-                {photoPreview && (
-                  <button
-                    type="button"
-                    onClick={() => removeUpload('photo')}
-                    className="text-sm font-medium text-red-600 hover:underline"
-                  >
-                    Remove Photo
-                  </button>
-                )}
-                <span className="text-xs text-slate-400">
-                  JPG, PNG or WebP · Maximum 5 MB
-                </span>
-              </div>
-            )}
+                  <span className="text-xs text-slate-400">
+                    JPG, PNG or WebP · Maximum 5 MB
+                  </span>
+                </div>
+              )}
 
-            <div className="mt-7 border-t border-slate-100 pt-5">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="text-sm font-semibold text-slate-700">
-                  Profile completion
-                </span>
-                <span className="text-sm font-bold text-sky-700">
-                  {completion}%
-                </span>
-              </div>
-
-              <div
-                className="h-2.5 overflow-hidden rounded-full bg-slate-100"
-                role="progressbar"
-                aria-valuenow={completion}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Profile completion"
-              >
-                <div
-                  className="h-full rounded-full bg-sky-600 transition-all duration-300"
-                  style={{ width: `${completion}%` }}
+              {/* Shared profile completion component */}
+              <div className="mt-7 border-t border-slate-100 pt-5">
+                <ProfileCompletion
+                  profile={draft}
+                  loading={loading}
+                  variant="compact"
                 />
               </div>
+            </div>
+          </section>
 
-              <p className="mt-2 text-xs text-slate-500">
-                Complete your details to build a stronger professional profile.
+          {/* Navigation tabs */}
+          <nav
+            aria-label="Profile sections"
+            className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2"
+          >
+            {tabs.map((tab) => (
+              <button
+                type="button"
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                  activeTab === tab
+                    ? 'bg-sky-600 text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
+
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600" />
+
+              <p className="mt-4 text-sm text-slate-500">
+                Loading your profile...
               </p>
             </div>
-          </div>
-        </section>
-
-        {/* Navigation tabs */}
-        <nav
-          aria-label="Profile sections"
-          className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2"
-        >
-          {tabs.map((tab) => (
-            <button
-              type="button"
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                activeTab === tab
-                  ? 'bg-sky-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
+          ) : (
+            <form
+              id="student-profile-form"
+              onSubmit={handleSave}
+              className="space-y-6"
             >
-              {tab}
-            </button>
-          ))}
-        </nav>
+              {renderCurrentTab()}
+            </form>
+          )}
 
-        {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600" />
-            <p className="mt-4 text-sm text-slate-500">
-              Loading your profile...
-            </p>
-          </div>
-        ) : (
-          <form
-            id="student-profile-form"
-            onSubmit={handleSave}
-            className="space-y-6"
-          >
-            {renderCurrentTab()}
-          </form>
-        )}
+          {editing && !loading && (
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={saving || uploading !== ''}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
 
-        {editing && !loading && (
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={handleCancel}
-              disabled={saving || uploading !== ''}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              form="student-profile-form"
-              disabled={saving || uploading !== ''}
-              className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        )}
-      </div>
-    </DashboardShell>
+              <button
+                type="submit"
+                form="student-profile-form"
+                disabled={saving || uploading !== ''}
+                className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          )}
+        </div>
+      </DashboardShell>
     </>
   );
 };

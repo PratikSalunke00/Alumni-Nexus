@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import DashboardShell from '../../components/DashboardShell';
 import StatCard from '../../components/StatCard';
 import StudentNavbar from '../../components/studentNavbar';
+import ProfileCompletion from '../../components/ProfileCompletion';
 
 import {
   studentStats,
@@ -17,73 +18,45 @@ import {
 const API_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Calculate completeness using actual profile fields.
-function calculateProfileCompleteness(profile = {}) {
-  const fields = [
-    profile.fullName,
-    profile.email,
-    profile.mobile,
-    profile.dob || profile.DOB,
-    profile.gender,
-    profile.address || profile.location,
-    profile.headline,
-    profile.about,
-    profile.education,
-    profile.skills,
-    profile.projects,
-    profile.certifications,
-    profile.linkedIn || profile.linkedin,
-    profile.github,
-    profile.portfolio,
-    profile.leetcode,
-    profile.profilePhoto || profile.photoUrl,
-    profile.resumeUrl,
-  ];
-
-  const completed = fields.filter((value) => {
-    if (Array.isArray(value)) return value.length > 0;
-    if (value && typeof value === 'object') {
-      return Object.values(value).some(
-        (item) => item !== null && item !== undefined && item !== ''
-      );
-    }
-    return value !== null && value !== undefined && String(value).trim() !== '';
-  }).length;
-
-  return Math.round((completed / fields.length) * 100);
-}
-
 const StudentDashboard = () => {
   const navigate = useNavigate();
 
   const [studentName, setStudentName] = useState('Student');
-  const [profilePercentage, setProfilePercentage] = useState(0);
+  const [profile, setProfile] = useState({});
   const [profileLoading, setProfileLoading] = useState(true);
 
-  // Get the logged-in student's name.
+  // Get the logged-in student's name from localStorage.
   useEffect(() => {
     try {
-      const user =
-        JSON.parse(localStorage.getItem('user') || 'null') || {};
+      const user = JSON.parse(
+        localStorage.getItem('user') || 'null'
+      ) || {};
 
-      const userData =
-        JSON.parse(localStorage.getItem('userData') || 'null') || {};
+      const userData = JSON.parse(
+        localStorage.getItem('userData') || 'null'
+      ) || {};
 
-      const name =
+      const storedName =
         localStorage.getItem('name') ||
         user.name ||
+        user.fullName ||
         userData.name ||
-        userData.user?.name;
+        userData.fullName ||
+        userData.user?.name ||
+        userData.user?.fullName;
 
-      if (name && name.trim()) {
-        setStudentName(name.trim());
+      if (typeof storedName === 'string' && storedName.trim()) {
+        setStudentName(storedName.trim());
       }
     } catch (error) {
-      console.error('Unable to read student information:', error);
+      console.error(
+        'Unable to read student information:',
+        error
+      );
     }
   }, []);
 
-  // Fetch the actual saved profile from the backend.
+  // Fetch the saved profile from the same API used by StudentProfile.jsx.
   const fetchProfile = useCallback(async () => {
     setProfileLoading(true);
 
@@ -93,12 +66,12 @@ const StudentDashboard = () => {
         localStorage.getItem('token');
 
       if (!token) {
-        setProfilePercentage(0);
+        setProfile({});
         return;
       }
 
       const response = await axios.get(
-        `${API_URL}/api/student/profile`,
+        `${API_URL}/api/student/profile/me`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -106,46 +79,43 @@ const StudentDashboard = () => {
         }
       );
 
-      const profile = response.data?.profile || {};
+      // Support the common response formats used by the backend.
+      const responseData = response.data;
 
-      // Use saved profile information, with login information as fallback.
-      const userData =
-        JSON.parse(localStorage.getItem('userData') || 'null') || {};
+      const savedProfile =
+        responseData?.profile ||
+        responseData?.student ||
+        responseData?.data?.profile ||
+        responseData?.data?.student ||
+        responseData?.data ||
+        responseData;
 
-      const user =
-        JSON.parse(localStorage.getItem('user') || 'null') || {};
-
-      const mergedProfile = {
-        ...profile,
-        fullName:
-          profile.fullName ||
-          profile.name ||
-          userData.name ||
-          userData.user?.name ||
-          user.name,
-        email:
-          profile.email ||
-          userData.email ||
-          userData.user?.email ||
-          user.email,
-      };
-
-      setProfilePercentage(calculateProfileCompleteness(mergedProfile));
+      setProfile(
+        savedProfile &&
+          typeof savedProfile === 'object' &&
+          !Array.isArray(savedProfile)
+          ? savedProfile
+          : {}
+      );
     } catch (error) {
       console.error(
         'Unable to fetch student profile:',
         error.response?.data || error.message
       );
+
+      setProfile({});
     } finally {
       setProfileLoading(false);
     }
   }, []);
 
+  // Fetch on page load and refresh when the user returns to the tab.
   useEffect(() => {
     fetchProfile();
 
-    // Refresh if the student returns to this page.
-    const handleFocus = () => fetchProfile();
+    const handleFocus = () => {
+      fetchProfile();
+    };
 
     window.addEventListener('focus', handleFocus);
 
@@ -163,53 +133,11 @@ const StudentDashboard = () => {
         pageTitle={`Welcome back, ${studentName}`}
       >
         <div className="space-y-6">
-
-          {/* Profile completeness */}
-          <section className="rounded-3xl border border-sky-100 bg-sky-50 p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-600">
-                  Profile completeness
-                </p>
-
-                <h3 className="mt-2 text-3xl font-semibold text-slate-900">
-                  {profileLoading ? 'Calculating...' : `${profilePercentage}% complete`}
-                </h3>
-
-                <div
-                  className="mt-4 h-3 w-full max-w-xl overflow-hidden rounded-full bg-sky-100"
-                  role="progressbar"
-                  aria-label="Profile completeness"
-                  aria-valuenow={profilePercentage}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                >
-                  <div
-                    className="h-full rounded-full bg-sky-600 transition-all duration-500"
-                    style={{ width: `${profilePercentage}%` }}
-                  />
-                </div>
-
-                <p className="mt-3 max-w-xl text-slate-600">
-                  {profileLoading
-                    ? 'Loading your profile information...'
-                    : profilePercentage === 100
-                      ? 'Your profile looks complete!'
-                      : 'Add your education, skills, projects, certifications, and other details to strengthen your profile.'}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => navigate('/student/profile')}
-                className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
-              >
-                {profilePercentage === 100
-                  ? 'View profile'
-                  : 'Complete profile'}
-              </button>
-            </div>
-          </section>
+          {/* Shared profile completion component */}
+          <ProfileCompletion
+            profile={profile}
+            loading={profileLoading}
+          />
 
           {/* Student statistics */}
           <section className="grid gap-4 md:grid-cols-3">
@@ -255,6 +183,7 @@ const StudentDashboard = () => {
                       <p className="text-lg font-semibold text-slate-900">
                         {item.title}
                       </p>
+
                       <p className="text-sm text-slate-600">
                         {item.company} · {item.type} · {item.location}
                       </p>
@@ -283,6 +212,7 @@ const StudentDashboard = () => {
                 <h3 className="text-xl font-semibold text-slate-900">
                   Recent status updates
                 </h3>
+
                 <button
                   type="button"
                   onClick={() => navigate('/student/applications')}
@@ -301,8 +231,10 @@ const StudentDashboard = () => {
                     <p className="font-medium text-slate-800">
                       {item.title}
                     </p>
+
                     <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
                       <span>{item.company}</span>
+
                       <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
                         {item.status}
                       </span>
@@ -320,6 +252,7 @@ const StudentDashboard = () => {
                 <h3 className="text-xl font-semibold text-slate-900">
                   Verified alumni
                 </h3>
+
                 <button
                   type="button"
                   onClick={() => navigate('/student/alumni')}
@@ -339,6 +272,7 @@ const StudentDashboard = () => {
                       <p className="font-semibold text-slate-900">
                         {alumni.name}
                       </p>
+
                       <p className="text-sm text-slate-600">
                         {alumni.role} · {alumni.company}
                       </p>
@@ -361,6 +295,7 @@ const StudentDashboard = () => {
                 <h3 className="text-xl font-semibold text-slate-900">
                   Quick actions
                 </h3>
+
                 <button
                   type="button"
                   onClick={() => navigate('/student/alumni')}
@@ -372,9 +307,18 @@ const StudentDashboard = () => {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
-                  { label: 'Find alumni', path: '/student/alumni' },
-                  { label: 'Browse internships', path: '/student/internships' },
-                  { label: 'Request referral', path: '/student/alumni' },
+                  {
+                    label: 'Find alumni',
+                    path: '/student/alumni',
+                  },
+                  {
+                    label: 'Browse internships',
+                    path: '/student/internships',
+                  },
+                  {
+                    label: 'Request referral',
+                    path: '/student/alumni',
+                  },
                 ].map((action) => (
                   <button
                     key={action.label}
