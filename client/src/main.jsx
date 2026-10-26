@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import LandingPage from "./views/LandingPage.jsx";
 import Login from "./views/auth/Login.jsx";
@@ -7,7 +7,7 @@ import SignUp from "./views/auth/Signup.jsx";
 import StudentDashboard from "./views/student/StudentDashboard.jsx";
 import AlumniDashboard from "./views/alumni/AlumniDashboard.jsx";
 import AdminDashboard from "./views/admin/AdminDashboard.jsx";
-import Profile from "./views/Profile.jsx";
+
 import AdminVerificationQueue from "./views/admin/AdminVerificationQueue.jsx";
 import StudentOpportunitiesPage from "./views/student/StudentOpportunitiesPage.jsx";
 import StudentReferralsPage from "./views/student/StudentReferralsPage.jsx";
@@ -46,16 +46,18 @@ createRoot(document.getElementById("root")).render(
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
 
-      <Route path="/student/profile" element={<StudentProfile />} />
-      
+    
+
       <Route
-        path="/profile"
+        path="/student/profile"
         element={
-          <ProtectedRoute allowedRoles={["student", "alumni", "admin"]}>
-            <Profile />
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentProfile />
           </ProtectedRoute>
         }
       />
+
+    
       <Route
         path="/student/dashboard"
         element={
@@ -64,14 +66,7 @@ createRoot(document.getElementById("root")).render(
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/student/profile"
-        element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
+      
       <Route
         path="/student/messages"
         element={
@@ -122,7 +117,7 @@ createRoot(document.getElementById("root")).render(
         path="/alumni/profile"
         element={
           <ProtectedRoute allowedRoles={["alumni"]}>
-            <Profile />
+            <StudentProfile />
           </ProtectedRoute>
         }
       />
