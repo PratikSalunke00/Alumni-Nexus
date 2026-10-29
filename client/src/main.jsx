@@ -1,63 +1,48 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
+
+// Public / Auth
 import LandingPage from "./views/LandingPage.jsx";
 import Login from "./views/auth/Login.jsx";
 import SignUp from "./views/auth/Signup.jsx";
-import StudentDashboard from "./views/student/StudentDashboard.jsx";
-import AlumniDashboard from "./views/alumni/AlumniDashboard.jsx";
-import AdminDashboard from "./views/admin/AdminDashboard.jsx";
 
-import AdminVerificationQueue from "./views/admin/AdminVerificationQueue.jsx";
+// Student views
+import StudentDashboard from "./views/student/StudentDashboard.jsx";
 import StudentOpportunitiesPage from "./views/student/StudentOpportunitiesPage.jsx";
 import StudentReferralsPage from "./views/student/StudentReferralsPage.jsx";
 import StudentMentorshipPage from "./views/student/StudentMentorshipPage.jsx";
+import StudentProfile from "./views/student/StudentProfile.jsx";
+import StudentAlumniDirectoryPage from "./views/student/StudentAlumniDirectoryPage.jsx";
+
+// Alumni views
+import AlumniDashboard from "./views/alumni/AlumniDashboard.jsx";
 import AlumniOpportunitiesPage from "./views/alumni/AlumniOpportunitiesPage.jsx";
 import AlumniReferralsPage from "./views/alumni/AlumniReferralsPage.jsx";
 import AlumniMentorshipPage from "./views/alumni/AlumniMentorshipPage.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import DashboardShell from "./components/DashboardShell.jsx";
-import StudentProfile from "./views/student/StudentProfile.jsx";
+import AlumniInsightsPage from "./views/alumni/AlumniInsightsPage.jsx";
 
-const DashboardPlaceholderPage = ({
-  role,
-  pageTitle,
-  eyebrow,
-  title,
-  description,
-}) => (
-  <DashboardShell role={role} pageTitle={pageTitle}>
-    <div className="space-y-6">
-      <section className="rounded-3xl border border-sky-100 bg-sky-50 p-6">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-sky-600">
-          {eyebrow}
-        </p>
-        <h3 className="mt-2 text-3xl font-semibold text-slate-900">{title}</h3>
-        <p className="mt-2 max-w-2xl text-slate-600">{description}</p>
-      </section>
-    </div>
-  </DashboardShell>
-);
+// Admin views
+import AdminDashboard from "./views/admin/AdminDashboard.jsx";
+import AdminVerificationQueue from "./views/admin/AdminVerificationQueue.jsx";
+import AdminUsersPage from "./views/admin/AdminUsersPage.jsx";
+import AdminOpportunitiesPage from "./views/admin/AdminOpportunitiesPage.jsx";
+import AdminReportsPage from "./views/admin/AdminReportsPage.jsx";
+import AdminSettingsPage from "./views/admin/AdminSettingsPage.jsx";
+import AdminInvitationCodesPage from "./views/admin/AdminInvitationCodesPage.jsx";
+
+// Guards
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <Routes>
+      {/* Public */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
 
-    
-
-      <Route
-        path="/student/profile"
-        element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <StudentProfile />
-          </ProtectedRoute>
-        }
-      />
-
-    
+      {/* ─── STUDENT ─── */}
       <Route
         path="/student/dashboard"
         element={
@@ -66,18 +51,11 @@ createRoot(document.getElementById("root")).render(
           </ProtectedRoute>
         }
       />
-      
       <Route
-        path="/student/messages"
+        path="/student/profile"
         element={
           <ProtectedRoute allowedRoles={["student"]}>
-            <DashboardPlaceholderPage
-              role="student"
-              pageTitle="Messages"
-              eyebrow="Inbox"
-              title="Student messages"
-              description="Your alumni conversations, referral follow-ups, and mentorship updates will appear here once you start engaging with the network."
-            />
+            <StudentProfile />
           </ProtectedRoute>
         }
       />
@@ -105,6 +83,24 @@ createRoot(document.getElementById("root")).render(
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/student/alumni"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentAlumniDirectoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/messages"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentMentorshipPage /> {/* placeholder until messaging is built */}
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ─── ALUMNI ─── */}
       <Route
         path="/alumni/dashboard"
         element={
@@ -149,16 +145,12 @@ createRoot(document.getElementById("root")).render(
         path="/alumni/insights"
         element={
           <ProtectedRoute allowedRoles={["alumni"]}>
-            <DashboardPlaceholderPage
-              role="alumni"
-              pageTitle="Insights"
-              eyebrow="Network analytics"
-              title="Alumni insights"
-              description="Track engagement, response rates, and student demand to understand which mentorship and opportunity programs are driving the strongest outcomes."
-            />
+            <AlumniInsightsPage />
           </ProtectedRoute>
         }
       />
+
+      {/* ─── ADMIN ─── */}
       <Route
         path="/admin/dashboard"
         element={
@@ -179,13 +171,7 @@ createRoot(document.getElementById("root")).render(
         path="/admin/users"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
-            <DashboardPlaceholderPage
-              role="admin"
-              pageTitle="Users"
-              eyebrow="Access management"
-              title="User directory"
-              description="Manage student, alumni, and admin accounts, review statuses, and maintain network access for verified members."
-            />
+            <AdminUsersPage />
           </ProtectedRoute>
         }
       />
@@ -193,13 +179,7 @@ createRoot(document.getElementById("root")).render(
         path="/admin/opportunities"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
-            <DashboardPlaceholderPage
-              role="admin"
-              pageTitle="Opportunities"
-              eyebrow="Platform content"
-              title="Opportunity moderation"
-              description="Review posted roles, approve employer listings, and ensure the network surface remains current and trustworthy."
-            />
+            <AdminOpportunitiesPage />
           </ProtectedRoute>
         }
       />
@@ -207,31 +187,26 @@ createRoot(document.getElementById("root")).render(
         path="/admin/reports"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
-            <DashboardPlaceholderPage
-              role="admin"
-              pageTitle="Reports"
-              eyebrow="Performance"
-              title="Network reports"
-              description="Review community growth, opportunities matched, and engagement across students and alumni."
-            />
+            <AdminReportsPage />
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/admin/settings"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
-            <DashboardPlaceholderPage
-              role="admin"
-              pageTitle="Settings"
-              eyebrow="System controls"
-              title="Admin settings"
-              description="Configure platform rules, role permissions, and communications for the Alumni Nexus network."
-            />
+            <AdminSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/invitation-codes"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminInvitationCodesPage />
           </ProtectedRoute>
         }
       />
     </Routes>
-  </BrowserRouter>,
+  </BrowserRouter>
 );

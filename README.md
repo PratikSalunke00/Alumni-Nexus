@@ -35,8 +35,19 @@ Then update values as needed.
 
 Required variables:
 
-- Client: `VITE_API_BASE_URL=http://localhost:8080`
-- Server: `PORT=8080`, `MONGODB_URI=mongodb://127.0.0.1:27017/alumni-nexus`, `JWT_SECRET=replace_with_a_secure_secret`
+- Client: `VITE_API_BASE_URL=http://localhost:8080`, `VITE_GOOGLE_CLIENT_ID`
+- Server: `PORT=8080`, `MONGODB_URI=mongodb://127.0.0.1:27017/alumni-nexus`, `JWT_SECRET=replace_with_a_secure_secret`, `GOOGLE_CLIENT_ID`
+
+Set `VITE_GOOGLE_CLIENT_ID` in `client/.env` and `GOOGLE_CLIENT_ID` in
+`server/.env` to the same Google OAuth Web client ID. In Google Cloud Console,
+open **APIs & Services → Credentials**, edit that OAuth 2.0 Client ID, and add
+`http://localhost:5173` under **Authorized JavaScript origins** for local
+development. If Vite starts on another port (for example, `5174`), add that
+origin too. Add your deployed site's origin there as well when deploying.
+Origins contain only the scheme, host, and optional port (no path). The API
+allows localhost development ports for CORS; Google OAuth still requires each
+used frontend origin to be authorized in Google Cloud Console. Restart both
+development servers after changing environment variables.
 
 ## Run locally
 

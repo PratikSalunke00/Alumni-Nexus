@@ -43,9 +43,10 @@ const createOpportunity = async (req, res) => {
 
 const getReferrals = async (req, res) => {
   try {
+    const userId = req.user.id;
     const filter = {};
-    if (req.user.role === "student") filter.student = req.user.id;
-    if (req.user.role === "alumni") filter.alumni = req.user.id;
+    if (req.user.role === "student") filter.student = userId;
+    if (req.user.role === "alumni") filter.alumni = userId;
 
     const referrals = await Referral.find(filter)
       .populate("student", "name email")

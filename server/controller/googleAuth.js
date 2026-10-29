@@ -349,10 +349,38 @@ export const googleAuth = async (req, res) => {
     }
 
     // Verify the Google identity on the server.
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let ticket;
+
+    try {
+      ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (error) {
+      const invalidCredential =
+        /Wrong number of segments|Can't parse token|No pem found|Invalid token signature|No issue time in token|No expiration time in token|using invalid format|Expiration time too far in future|Token used too early|Token used too late|Invalid issuer|Wrong recipient/i.test(
+          error.message || ""
+        );
+
+      if (invalidCredential) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Google credential is invalid for this application. Check the Google OAuth client ID and authorized JavaScript origins.",
+        });
+      }
+
+      console.error("Google credential verification failed:", {
+        name: error.name,
+        code: error.code,
+        status: error.response?.status,
+      });
+
+      return res.status(502).json({
+        success: false,
+        message: "Google could not verify your account right now. Please try again.",
+      });
+    }
 
     const payload = ticket.getPayload();
 

@@ -16,6 +16,18 @@ const collegeSchema = new mongoose.Schema(
       trim: true,
     },
 
+    website: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+      maxlength: 2000,
+    },
+
     status: {
       type: String,
       enum: ["active", "inactive"],

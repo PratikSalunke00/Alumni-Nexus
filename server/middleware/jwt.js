@@ -18,6 +18,8 @@ const checkJWT = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
+    // Provide both .id and .userId aliases for compatibility
+    req.user.id = decoded.userId || decoded.id;
     next();
   } catch (err) {
     return res.status(401).json({

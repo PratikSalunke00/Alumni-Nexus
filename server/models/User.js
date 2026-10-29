@@ -98,6 +98,16 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,
