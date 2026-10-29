@@ -117,6 +117,18 @@ app.post("/api/auth/change-password", checkJWT, changePassword);
 app.put("/api/auth/users", checkJWT, updateUser);
 app.get("/api/auth/profile/me", checkJWT, getCurrentProfile);
 app.put("/api/auth/profile/me", checkJWT, updateCurrentProfile);
+app.get(
+  "/api/alumni/profile/me",
+  checkJWT,
+  requireRole(["alumni"]),
+  getCurrentProfile
+);
+app.put(
+  "/api/alumni/profile/me",
+  checkJWT,
+  requireRole(["alumni"]),
+  updateCurrentProfile
+);
 
 // ──────────────────────────────────────────────
 // STUDENT PROFILE (ImageKit upload)

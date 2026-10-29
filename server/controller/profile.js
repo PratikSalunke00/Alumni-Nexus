@@ -12,54 +12,72 @@ const sanitizeUser = (user) => {
 const profileFieldMap = {
   name: "name",
   email: "email",
-  mobile: "mobile",
+  phone: "phone",
+  mobile: "phone",
   city: "city",
+  state: "state",
   country: "country",
-  department: "department",
   branch: "branch",
   graduationYear: "graduationYear",
-  role: "role",
   company: "company",
-  designation: "designation",
-  experience: "experience",
+  jobTitle: "jobTitle",
+  designation: "jobTitle",
+  headline: "headline",
   bio: "bio",
+  about: "bio",
+  education: "education",
+  workExperience: "workExperience",
   skills: "skills",
+  softSkills: "softSkills",
+  tools: "tools",
   projects: "projects",
   certifications: "certifications",
+  achievements: "achievements",
   github: "github",
   portfolio: "portfolio",
   linkedin: "linkedin",
   preferredRoles: "preferredRoles",
-  locations: "locations",
-  careerInterests: "careerInterests",
   mentorshipAvailable: "mentorshipAvailable",
-  referralPreference: "referralPreference",
-  profileVisibility: "profileVisibility",
-  profileImage: "profileImage",
+  mentorshipAreas: "mentorshipAreas",
+  mentorshipFormat: "mentorshipFormat",
+  mentorshipAvailability: "mentorshipAvailability",
+  referralAvailable: "referralAvailable",
+  profilePhoto: "profilePhoto",
+  profileImage: "profilePhoto",
   resumeUrl: "resumeUrl",
-  verified: "verified",
-  collegeEmail: "collegeEmail",
-  department: "department",
+  photo: "profilePhoto",
+  resume: "resumeUrl",
 };
 
 const isValidUrl = (value) => {
   if (!value) return true;
   try {
-    new URL(value);
-    return true;
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol);
   } catch {
     return false;
   }
 };
 
+const preserveCollegeId = (user) => {
+  if (user?.collegeId?.name) {
+    user.collegeName = user.collegeId.name;
+    user.collegeId = user.collegeId._id;
+  }
+  return user;
+};
+
 const getCurrentProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).lean();
+    let user = await User.findById(req.user.id)
+      .populate("collegeId", "name")
+      .lean();
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    user = preserveCollegeId(user);
     delete user.password;
     return res.json({ success: true, data: user });
   } catch (error) {
@@ -73,57 +91,145 @@ const updateCurrentProfile = async (req, res) => {
     const incoming = req.body || {};
     const update = {};
 
+    const protectedFields = [
+      "role",
+      "verified",
+      "verificationStatus",
+      "collegeId",
+      "isActive",
+    ];
+    if (protectedFields.some((field) => field in incoming)) {
+      return res.status(403).json({
+        success: false,
+        message: "Account access and verification fields cannot be changed through profile updates",
+      });
+    }
+
     Object.entries(profileFieldMap).forEach(([incomingKey, schemaKey]) => {
       if (incoming[incomingKey] !== undefined) {
         update[schemaKey] = incoming[incomingKey];
       }
     });
 
-    if (incoming.skills && Array.isArray(incoming.skills)) {
-      update.skills = incoming.skills;
+    const arrayFields = [
+      "education",
+      "workExperience",
+      "skills",
+      "softSkills",
+      "tools",
+      "projects",
+      "certifications",
+      "achievements",
+      "preferredRoles",
+      "mentorshipAreas",
+    ];
+    for (const field of arrayFields) {
+      if (field in update && !Array.isArray(update[field])) {
+        return res.status(400).json({
+          success: false,
+          message: `${field} must be an array`,
+        });
+      }
     }
 
-    if (incoming.preferredRoles && Array.isArray(incoming.preferredRoles)) {
-      update.preferredRoles = incoming.preferredRoles;
+    for (const field of ["skills", "softSkills", "tools", "achievements", "preferredRoles", "mentorshipAreas"]) {
+      if (Array.isArray(update[field]) && update[field].some((item) => typeof item !== "string")) {
+        return res.status(400).json({
+          success: false,
+          message: `${field} must contain only text values`,
+        });
+      }
     }
 
-    if (incoming.locations && Array.isArray(incoming.locations)) {
-      update.locations = incoming.locations;
+    for (const field of ["education", "workExperience", "projects", "certifications"]) {
+      if (Array.isArray(update[field]) && update[field].some((item) => !item || typeof item !== "object" || Array.isArray(item))) {
+        return res.status(400).json({
+          success: false,
+          message: `${field} must contain valid profile entries`,
+        });
+      }
     }
 
-    if (incoming.careerInterests && Array.isArray(incoming.careerInterests)) {
-      update.careerInterests = incoming.careerInterests;
+    for (const field of ["mentorshipAvailable", "referralAvailable"]) {
+      if (field in update && typeof update[field] !== "boolean") {
+        return res.status(400).json({
+          success: false,
+          message: `${field} must be a boolean`,
+        });
+      }
     }
 
-    if (incoming.projects && Array.isArray(incoming.projects)) {
-      update.projects = incoming.projects;
+    if (incoming.graduationYear !== undefined) {
+      const year = incoming.graduationYear === "" || incoming.graduationYear === null
+        ? null
+        : Number(incoming.graduationYear);
+      if (year !== null && (!Number.isInteger(year) || year < 1900 || year > new Date().getFullYear() + 10)) {
+        return res.status(400).json({
+          success: false,
+          message: "graduationYear must be a valid year",
+        });
+      }
+      update.graduationYear = year;
     }
 
-    if (incoming.certifications && Array.isArray(incoming.certifications)) {
-      update.certifications = incoming.certifications;
-    }
-
-    const urlFields = ["github", "portfolio", "linkedin", "profileImage", "resumeUrl"];
+    const urlFields = [
+      "github",
+      "portfolio",
+      "linkedin",
+      "profilePhoto",
+      "resumeUrl",
+    ];
     for (const field of urlFields) {
       if (update[field] && !isValidUrl(update[field])) {
         return res.status(400).json({ success: false, message: `${field} must be a valid URL` });
       }
     }
 
-    if (incoming.role && !["student", "alumni", "admin"].includes(incoming.role)) {
-      return res.status(400).json({ success: false, message: "Invalid role" });
+    const nestedUrlFields = [
+      ...(Array.isArray(update.projects)
+        ? update.projects.flatMap((project, index) => [
+            [`Project ${index + 1} GitHub URL`, project.githubUrl],
+            [`Project ${index + 1} live URL`, project.liveUrl],
+          ])
+        : []),
+      ...(Array.isArray(update.certifications)
+        ? update.certifications.map((certification, index) => [
+            `Certification ${index + 1} credential URL`,
+            certification.credentialUrl,
+          ])
+        : []),
+    ];
+
+    for (const [label, url] of nestedUrlFields) {
+      if (url && !isValidUrl(url)) {
+        return res.status(400).json({
+          success: false,
+          message: `${label} must be a valid URL`,
+        });
+      }
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, update, { new: true, runValidators: true }).lean();
+    let updatedUser = await User.findByIdAndUpdate(userId, update, {
+      new: true,
+      runValidators: true,
+    })
+      .populate("collegeId", "name")
+      .lean();
 
     if (!updatedUser) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    updatedUser = preserveCollegeId(updatedUser);
     delete updatedUser.password;
     return res.json({ success: true, message: "Profile updated successfully", data: updatedUser });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    const status = ["ValidationError", "CastError"].includes(error.name)
+      ? 400
+      : error.code === 11000
+        ? 409
+        : 500;
+    return res.status(status).json({ success: false, message: error.message });
   }
 };
 

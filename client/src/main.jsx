@@ -21,6 +21,7 @@ import AlumniOpportunitiesPage from "./views/alumni/AlumniOpportunitiesPage.jsx"
 import AlumniReferralsPage from "./views/alumni/AlumniReferralsPage.jsx";
 import AlumniMentorshipPage from "./views/alumni/AlumniMentorshipPage.jsx";
 import AlumniInsightsPage from "./views/alumni/AlumniInsightsPage.jsx";
+import AlumniProfile from "./views/alumni/AlumniProfile.jsx";
 
 // Admin views
 import AdminDashboard from "./views/admin/AdminDashboard.jsx";
@@ -113,7 +114,7 @@ createRoot(document.getElementById("root")).render(
         path="/alumni/profile"
         element={
           <ProtectedRoute allowedRoles={["alumni"]}>
-            <StudentProfile />
+            <AlumniProfile />
           </ProtectedRoute>
         }
       />
