@@ -22,6 +22,7 @@ import AlumniReferralsPage from "./views/alumni/AlumniReferralsPage.jsx";
 import AlumniMentorshipPage from "./views/alumni/AlumniMentorshipPage.jsx";
 import AlumniInsightsPage from "./views/alumni/AlumniInsightsPage.jsx";
 import AlumniProfile from "./views/alumni/AlumniProfile.jsx";
+import AllPosts from "./views/AllPosts.jsx";
 
 // Admin views
 import AdminDashboard from "./views/admin/AdminDashboard.jsx";
@@ -42,6 +43,23 @@ createRoot(document.getElementById("root")).render(
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+
+      <Route
+        path="/community"
+        element={
+          <ProtectedRoute allowedRoles={["student", "alumni", "admin"]}>
+            <AllPosts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/community/posts/:postId"
+        element={
+          <ProtectedRoute allowedRoles={["student", "alumni", "admin"]}>
+            <AllPosts />
+          </ProtectedRoute>
+        }
+      />
 
       {/* ─── STUDENT ─── */}
       <Route

@@ -17,20 +17,20 @@ export const getAdminStats = async (req, res) => {
   try {
     const collegeId = req.user.collegeId;
 
+    // Fetch college user IDs once — reused for all sub-queries
+    const collegeUserIds = await User.find({ collegeId }).distinct("_id");
+
     const [totalUsers, totalAlumni, totalStudents, pendingVerifications, totalOpportunities, pendingOpportunities] =
       await Promise.all([
         User.countDocuments({ collegeId }),
         User.countDocuments({ collegeId, role: "alumni" }),
         User.countDocuments({ collegeId, role: "student" }),
-        VerificationRequest.countDocuments({
-          status: "pending",
-          // Only count users of this college
-          user: {
-            $in: await User.find({ collegeId }).distinct("_id"),
-          },
-        }),
-        Opportunity.countDocuments({ postedBy: { $in: await User.find({ collegeId }).distinct("_id") } }),
-        Opportunity.countDocuments({ status: "open", postedBy: { $in: await User.find({ collegeId }).distinct("_id") } }),
+        // Count users whose verificationStatus is still "pending" on their profile.
+        // This is the source of truth — independent of whether they explicitly
+        // submitted a VerificationRequest document.
+        User.countDocuments({ collegeId, verificationStatus: "pending" }),
+        Opportunity.countDocuments({ postedBy: { $in: collegeUserIds } }),
+        Opportunity.countDocuments({ status: "open", postedBy: { $in: collegeUserIds } }),
       ]);
 
     return res.json({

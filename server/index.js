@@ -22,6 +22,19 @@ import {
   createReferral,
   getMentorshipRequests,
   createMentorshipRequest,
+  getCommunityPosts,
+  getCommunityPost,
+  createCommunityPost,
+  updateCommunityPost,
+  deleteCommunityPost,
+  likeCommunityPost,
+  unlikeCommunityPost,
+  getCommunityFollowStatus,
+  getCommunityComments,
+  createCommunityComment,
+  deleteCommunityComment,
+  followCommunityUser,
+  unfollowCommunityUser,
 } from "./controller/community.js";
 import {
   registerStudent,
@@ -164,6 +177,40 @@ app.patch("/api/referrals/:id/status", checkJWT, requireRole(["alumni"]), update
 app.get("/api/mentorship-requests", checkJWT, getMentorshipRequests);
 app.post("/api/mentorship-requests", checkJWT, createMentorshipRequest);
 app.patch("/api/mentorship-requests/:id/status", checkJWT, requireRole(["alumni"]), updateMentorshipRequestStatus);
+
+// ──────────────────────────────────────────────
+// COMMUNITY FEED
+// ──────────────────────────────────────────────
+const communityRoles = ["student", "alumni", "admin"];
+app.get("/api/community/posts", checkJWT, requireRole(communityRoles), getCommunityPosts);
+app.post("/api/community/posts", checkJWT, requireRole(communityRoles), createCommunityPost);
+app.get("/api/community/posts/:postId", checkJWT, requireRole(communityRoles), getCommunityPost);
+app.put("/api/community/posts/:postId", checkJWT, requireRole(communityRoles), updateCommunityPost);
+app.delete("/api/community/posts/:postId", checkJWT, requireRole(communityRoles), deleteCommunityPost);
+app.post("/api/community/posts/:postId/like", checkJWT, requireRole(communityRoles), likeCommunityPost);
+app.delete("/api/community/posts/:postId/like", checkJWT, requireRole(communityRoles), unlikeCommunityPost);
+app.get("/api/community/posts/:postId/comments", checkJWT, requireRole(communityRoles), getCommunityComments);
+app.post("/api/community/posts/:postId/comments", checkJWT, requireRole(communityRoles), createCommunityComment);
+app.delete("/api/community/comments/:commentId", checkJWT, requireRole(communityRoles), deleteCommunityComment);
+app.post("/api/community/users/:userId/follow", checkJWT, requireRole(communityRoles), followCommunityUser);
+app.delete("/api/community/users/:userId/follow", checkJWT, requireRole(communityRoles), unfollowCommunityUser);
+app.get("/api/community/users/:userId/follow-status", checkJWT, requireRole(communityRoles), getCommunityFollowStatus);
+
+// Keep the community-prefixed API used by the app while exposing the
+// conventional resource paths for clients that integrate with the feed.
+app.get("/api/posts", checkJWT, requireRole(communityRoles), getCommunityPosts);
+app.post("/api/posts", checkJWT, requireRole(communityRoles), createCommunityPost);
+app.get("/api/posts/:postId", checkJWT, requireRole(communityRoles), getCommunityPost);
+app.put("/api/posts/:postId", checkJWT, requireRole(communityRoles), updateCommunityPost);
+app.delete("/api/posts/:postId", checkJWT, requireRole(communityRoles), deleteCommunityPost);
+app.post("/api/posts/:postId/like", checkJWT, requireRole(communityRoles), likeCommunityPost);
+app.delete("/api/posts/:postId/like", checkJWT, requireRole(communityRoles), unlikeCommunityPost);
+app.get("/api/posts/:postId/comments", checkJWT, requireRole(communityRoles), getCommunityComments);
+app.post("/api/posts/:postId/comments", checkJWT, requireRole(communityRoles), createCommunityComment);
+app.delete("/api/posts/:postId/comments/:commentId", checkJWT, requireRole(communityRoles), deleteCommunityComment);
+app.post("/api/users/:userId/follow", checkJWT, requireRole(communityRoles), followCommunityUser);
+app.delete("/api/users/:userId/follow", checkJWT, requireRole(communityRoles), unfollowCommunityUser);
+app.get("/api/users/:userId/follow-status", checkJWT, requireRole(communityRoles), getCommunityFollowStatus);
 
 // ──────────────────────────────────────────────
 // ALUMNI DIRECTORY & STATS

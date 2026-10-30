@@ -63,6 +63,23 @@ const AdminUsersPage = () => {
     }
   };
 
+  const handleVerify = async (userId, status) => {
+    setActionLoading((prev) => ({ ...prev, [userId]: true }));
+    try {
+      await axios.patch(
+        `${API}/api/admin/verification-requests/${userId}`,
+        { status },
+        { headers: { Authorization: `Bearer ${getToken()}` } }
+      );
+      toast.success(status === "approved" ? "User verified" : "User rejected");
+      fetchUsers(pagination.page);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Action failed");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [userId]: false }));
+    }
+  };
+
   return (
     <DashboardShell role="admin" pageTitle="User directory">
       <Toaster position="top-right" />
@@ -165,21 +182,32 @@ const AdminUsersPage = () => {
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleSuspend(u._id, u.isActive !== false)}
-                        disabled={!!actionLoading[u._id]}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                          u.isActive !== false
-                            ? "bg-rose-50 text-rose-600 hover:bg-rose-100"
-                            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                        } disabled:opacity-50`}
-                      >
-                        {actionLoading[u._id]
-                          ? "…"
-                          : u.isActive !== false
-                            ? "Suspend"
-                            : "Reactivate"}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {u.verificationStatus === "pending" && (
+                          <button
+                            onClick={() => handleVerify(u._id, "approved")}
+                            disabled={!!actionLoading[u._id]}
+                            className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            Verify
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleSuspend(u._id, u.isActive !== false)}
+                          disabled={!!actionLoading[u._id]}
+                          className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+                            u.isActive !== false
+                              ? "bg-rose-50 text-rose-600 hover:bg-rose-100"
+                              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                          } disabled:opacity-50`}
+                        >
+                          {actionLoading[u._id]
+                            ? "…"
+                            : u.isActive !== false
+                              ? "Suspend"
+                              : "Reactivate"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

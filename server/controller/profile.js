@@ -1,7 +1,6 @@
 import User from "../models/User.js";
 import VerificationRequest from "../models/VerificationRequest.js";
 
-
 const sanitizeUser = (user) => {
   if (!user) return null;
   const data = user.toObject ? user.toObject() : { ...user };
@@ -241,13 +240,23 @@ const submitVerificationRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    if ((req.user.role || user.role) !== "alumni") {
-      return res.status(403).json({ success: false, message: "Only alumni may submit verification requests" });
+    if (!["alumni", "student"].includes(req.user.role || user.role)) {
+      return res.status(403).json({ success: false, message: "Only students and alumni may submit verification requests" });
     }
 
-    const request = await VerificationRequest.create({
+    // Check if there is an existing pending request
+    let request = await VerificationRequest.findOne({ user: user._id, status: "pending" });
+    if (request) {
+      if (req.body.evidence) {
+        request.evidence = req.body.evidence;
+        await request.save();
+      }
+      return res.status(200).json({ success: true, message: "Verification request updated", data: request });
+    }
+
+    request = await VerificationRequest.create({
       user: user._id,
-      type: "alumni",
+      type: (req.user.role || user.role) === "alumni" ? "alumni" : "student",
       evidence: req.body.evidence || "",
       status: "pending",
     });
@@ -260,12 +269,47 @@ const submitVerificationRequest = async (req, res) => {
 
 const getVerificationRequests = async (req, res) => {
   try {
-    const requests = await VerificationRequest.find()
-      .populate("user", "name email role company designation verified")
+    let collegeId = req.user?.collegeId;
+    if (!collegeId && req.user?.id) {
+      const adminUser = await User.findById(req.user.id).select("collegeId").lean();
+      collegeId = adminUser?.collegeId;
+    }
+
+    // Find all student and alumni users in this college
+    const collegeFilter = collegeId
+      ? { collegeId, role: { $in: ["student", "alumni"] } }
+      : { role: { $in: ["student", "alumni"] } };
+
+    const collegeUsers = await User.find(collegeFilter)
+      .select("_id name email role company branch jobTitle headline verificationStatus createdAt profilePhoto")
+      .lean();
+    const collegeUserIds = collegeUsers.map((u) => u._id);
+
+    // Auto-create VerificationRequest for any user with verificationStatus: "pending" who does not have an existing VerificationRequest
+    const pendingUsers = collegeUsers.filter((u) => u.verificationStatus === "pending");
+    for (const u of pendingUsers) {
+      const existing = await VerificationRequest.findOne({ user: u._id });
+      if (!existing) {
+        await VerificationRequest.create({
+          user: u._id,
+          type: u.role === "alumni" ? "alumni" : "student",
+          evidence: u.headline || u.branch || u.company || `New ${u.role} registration awaiting verification`,
+          status: "pending",
+          createdAt: u.createdAt || new Date(),
+        });
+      }
+    }
+
+    const requests = await VerificationRequest.find({
+      user: { $in: collegeUserIds },
+    })
+      .populate("user", "name email role company designation branch headline profilePhoto verificationStatus")
       .sort({ createdAt: -1 });
 
-    return res.json({ success: true, data: requests });
+    const validRequests = requests.filter((r) => r.user);
+    return res.json({ success: true, data: validRequests });
   } catch (error) {
+    console.error("getVerificationRequests error:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -279,7 +323,26 @@ const updateVerificationStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid verification status" });
     }
 
-    const request = await VerificationRequest.findById(id);
+    let request = await VerificationRequest.findById(id);
+    if (!request) {
+      // Fallback: id might be a User ID
+      const user = await User.findById(id);
+      if (user) {
+        request = await VerificationRequest.findOne({ user: user._id });
+        if (!request) {
+          request = await VerificationRequest.create({
+            user: user._id,
+            type: user.role === "alumni" ? "alumni" : "student",
+            evidence: user.headline || user.branch || user.company || `New ${user.role} registration`,
+            status,
+            rejectionReason: status === "rejected" ? (rejectionReason || "") : "",
+            reviewedBy: req.user.id,
+            reviewedAt: new Date(),
+          });
+        }
+      }
+    }
+
     if (!request) {
       return res.status(404).json({ success: false, message: "Verification request not found" });
     }
@@ -291,16 +354,19 @@ const updateVerificationStatus = async (req, res) => {
 
     await request.save();
 
-    if (status === "approved") {
-      await User.findByIdAndUpdate(request.user, { verified: true, verificationStatus: "verified" });
-    }
+    const userVerificationStatus = status === "approved" ? "verified" : status === "rejected" ? "rejected" : "pending";
+    await User.findByIdAndUpdate(request.user, {
+      verificationStatus: userVerificationStatus,
+    });
 
-    if (status === "rejected") {
-      await User.findByIdAndUpdate(request.user, { verified: false, verificationStatus: "rejected" });
-    }
+    const populated = await VerificationRequest.findById(request._id).populate(
+      "user",
+      "name email role company designation branch headline profilePhoto verificationStatus"
+    );
 
-    return res.json({ success: true, message: "Verification status updated", data: request });
+    return res.json({ success: true, message: "Verification status updated", data: populated });
   } catch (error) {
+    console.error("updateVerificationStatus error:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
