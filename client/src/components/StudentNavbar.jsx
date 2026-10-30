@@ -1,50 +1,42 @@
-
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import {
-  Bars3Icon,
-  BellIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 const StudentNavbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   // Get logged-in user
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const user = JSON.parse(localStorage.getItem("user") || "null");
   const role = user?.role?.toLowerCase();
 
   // Dashboard links based on role
   const navItems = [
-    { label: 'Home', path: '/', roles: ['student', 'alumni', 'admin'] },
-    { label: 'Dashboard', path: '/student/dashboard', roles: ['student'] },
-    { label: 'Dashboard', path: '/alumni/dashboard', roles: ['alumni'] },
-    { label: 'Dashboard', path: '/admin/dashboard', roles: ['admin'] },
+    { label: "Home", path: "/", roles: ["student", "alumni", "admin"] },
+    { label: "Dashboard", path: "/student/dashboard", roles: ["student"] },
+    { label: "Dashboard", path: "/alumni/dashboard", roles: ["alumni"] },
+    { label: "Dashboard", path: "/admin/dashboard", roles: ["admin"] },
   ];
 
-  const visibleItems = navItems.filter((item) =>
-    item.roles.includes(role)
-  );
+  const visibleItems = navItems.filter((item) => item.roles.includes(role));
+
+  // Profile path based on role
+  const profilePath =
+    role === "student"
+      ? "/student/profile"
+      : role === "alumni"
+        ? "/alumni/profile"
+        : "/admin/dashboard";
 
   // Sign out
   const handleSignOut = () => {
-    localStorage.removeItem('user');
-
-    // Remove this line if your application doesn't store a token
-    localStorage.removeItem('token');
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
 
     setMenuOpen(false);
-    navigate('/');
+    navigate("/");
     window.location.reload();
   };
-
-  const profilePath =
-    role === 'student'
-      ? '/student/profile'
-      : role === 'alumni'
-      ? '/alumni/profile'
-      : '/admin/dashboard';
 
   return (
     <header className="border-b border-slate-200 bg-white/95 backdrop-blur-sm">
@@ -59,13 +51,19 @@ const StudentNavbar = () => {
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
               College network
             </p>
-            <p className="text-lg font-semibold text-slate-900">
-              Alumni Nexus
-            </p>
+            <p className="text-lg font-semibold text-slate-900">Alumni Nexus</p>
           </div>
         </Link>
 
-        {/* Desktop navigation */}
+        <Link
+          to="/community/posts"
+          onClick={() => setMenuOpen(false)}
+          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+        >
+          Common Posts 
+        </Link>
+
+        {/* Desktop Navigation */}
         <div className="hidden items-center gap-7 md:flex">
           {visibleItems.map((item) => (
             <Link
@@ -76,12 +74,23 @@ const StudentNavbar = () => {
               {item.label}
             </Link>
           ))}
+
+          {/* Common Posts */}
+          {user && (
+            <Link
+              to="/community/posts"
+              className="text-sm font-medium text-slate-600 transition hover:text-sky-600"
+            >
+              Common Posts
+            </Link>
+          )}
         </div>
 
-        {/* Desktop buttons */}
+        {/* Desktop Buttons */}
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              {/* Notifications */}
               <button
                 type="button"
                 aria-label="Notifications"
@@ -90,6 +99,7 @@ const StudentNavbar = () => {
                 <BellIcon className="h-5 w-5" />
               </button>
 
+              {/* Profile */}
               <Link
                 to={profilePath}
                 className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700"
@@ -97,6 +107,15 @@ const StudentNavbar = () => {
                 Profile
               </Link>
 
+              {/* Common Posts */}
+              <Link
+                to="/community/posts"
+                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+              >
+                Common Posts
+              </Link>
+
+              {/* Sign out */}
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -106,19 +125,16 @@ const StudentNavbar = () => {
               </button>
             </>
           ) : (
-            <>
-              
-              <Link
-                to="/signup"
-                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
-              >
-                Sign Out
-              </Link>
-            </>
+            <Link
+              to="/signup"
+              className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+            >
+              Sign Up
+            </Link>
           )}
         </div>
 
-        {/* Mobile menu button */}
+        {/* Mobile Menu Button */}
         <button
           type="button"
           onClick={() => setMenuOpen((prev) => !prev)}
@@ -133,7 +149,7 @@ const StudentNavbar = () => {
         </button>
       </nav>
 
-      {/* Mobile navigation */}
+      {/* Mobile Navigation */}
       {menuOpen && (
         <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
           <div className="flex flex-col gap-3">
@@ -150,6 +166,7 @@ const StudentNavbar = () => {
 
             {user ? (
               <>
+                {/* Profile */}
                 <Link
                   to={profilePath}
                   onClick={() => setMenuOpen(false)}
@@ -158,6 +175,16 @@ const StudentNavbar = () => {
                   Profile
                 </Link>
 
+                {/* Common Posts */}
+                <Link
+                  to="/community/posts"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+                >
+                  Common Posts
+                </Link>
+
+                {/* Sign out */}
                 <button
                   type="button"
                   onClick={handleSignOut}
@@ -167,17 +194,13 @@ const StudentNavbar = () => {
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  to="/signOut"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700"
-                >
-                  SignOut
-                </Link>
-
-                
-              </>
+              <Link
+                to="/signup"
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white"
+              >
+                Sign Up
+              </Link>
             )}
           </div>
         </div>

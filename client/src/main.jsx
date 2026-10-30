@@ -33,6 +33,8 @@ import AdminReportsPage from "./views/admin/AdminReportsPage.jsx";
 import AdminSettingsPage from "./views/admin/AdminSettingsPage.jsx";
 import AdminInvitationCodesPage from "./views/admin/AdminInvitationCodesPage.jsx";
 
+import CommonPost from "./views/CommonPost.jsx";
+
 // Guards
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
@@ -57,6 +59,15 @@ createRoot(document.getElementById("root")).render(
         element={
           <ProtectedRoute allowedRoles={["student", "alumni", "admin"]}>
             <AllPosts />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/community/posts"
+        element={
+          <ProtectedRoute allowedRoles={["student", "alumni", "admin"]}>
+            <CommonPost />
           </ProtectedRoute>
         }
       />
@@ -114,7 +125,8 @@ createRoot(document.getElementById("root")).render(
         path="/student/messages"
         element={
           <ProtectedRoute allowedRoles={["student"]}>
-            <StudentMentorshipPage /> {/* placeholder until messaging is built */}
+            <StudentMentorshipPage />{" "}
+            {/* placeholder until messaging is built */}
           </ProtectedRoute>
         }
       />
@@ -227,5 +239,5 @@ createRoot(document.getElementById("root")).render(
         }
       />
     </Routes>
-  </BrowserRouter>
+  </BrowserRouter>,
 );
