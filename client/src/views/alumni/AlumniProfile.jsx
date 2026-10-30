@@ -22,6 +22,7 @@ const emptyProfile = {
   achievements: [], mentorshipAvailable: false, mentorshipAreas: [], mentorshipFormat: "",
   mentorshipAvailability: "", referralAvailable: false, preferredRoles: [], linkedin: "",
   github: "", portfolio: "", resumeUrl: "",
+  followerCount: 0, followingCount: 0,
 };
 const editableFields = Object.keys(emptyProfile);
 const emptyEducation = { college: "", degree: "", branch: "", startYear: "", graduationYear: "", grade: "", achievements: "" };
@@ -303,6 +304,18 @@ const AlumniProfile = () => {
   const renderOverview = () => {
     const firstEducation = draft.education[0];
     return <div className="space-y-6">
+      <Section title="Your Network">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-sky-50 p-4">
+            <p className="text-2xl font-bold text-sky-800">{profile.followerCount || 0}</p>
+            <p className="mt-1 text-sm text-slate-600">Followers</p>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-2xl font-bold text-slate-800">{profile.followingCount || 0}</p>
+            <p className="mt-1 text-sm text-slate-600">Following</p>
+          </div>
+        </div>
+      </Section>
       <Section title="About Me" description="Your professional summary">
         {draft.bio ? <p className="whitespace-pre-wrap text-sm leading-7 text-slate-600">{draft.bio}</p> : <EmptyState>Add a professional summary to introduce yourself.</EmptyState>}
       </Section>

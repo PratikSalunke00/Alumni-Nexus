@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import VerificationRequest from "../models/VerificationRequest.js";
+import Follow from "../models/Follow.js";
 
 const sanitizeUser = (user) => {
   if (!user) return null;
@@ -66,6 +67,15 @@ const preserveCollegeId = (user) => {
   return user;
 };
 
+const attachFollowCounts = async (user) => {
+  const collegeId = user.collegeId?._id || user.collegeId;
+  const [followerCount, followingCount] = await Promise.all([
+    Follow.countDocuments({ followingId: user._id, collegeId }),
+    Follow.countDocuments({ followerId: user._id, collegeId }),
+  ]);
+  return { ...user, followerCount, followingCount };
+};
+
 const getCurrentProfile = async (req, res) => {
   try {
     let user = await User.findById(req.user.id)
@@ -78,7 +88,7 @@ const getCurrentProfile = async (req, res) => {
 
     user = preserveCollegeId(user);
     delete user.password;
-    return res.json({ success: true, data: user });
+    return res.json({ success: true, data: await attachFollowCounts(user) });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -221,7 +231,11 @@ const updateCurrentProfile = async (req, res) => {
 
     updatedUser = preserveCollegeId(updatedUser);
     delete updatedUser.password;
-    return res.json({ success: true, message: "Profile updated successfully", data: updatedUser });
+    return res.json({
+      success: true,
+      message: "Profile updated successfully",
+      data: await attachFollowCounts(updatedUser),
+    });
   } catch (error) {
     const status = ["ValidationError", "CastError"].includes(error.name)
       ? 400

@@ -40,6 +40,8 @@ import CommentSection from './CommentSection';
 
 /* ── helpers ── */
 const safeImage = (value) => {
+  if (!value) return '';
+  if (typeof value === 'object' && value?.url) return safeImage(value.url);
   try {
     const u = new URL(value);
     return ['http:', 'https:'].includes(u.protocol) ? u.href : '';
@@ -131,11 +133,10 @@ const PostCard = ({
   const isAdmin = userRole === 'admin';
   const canAnnounce = isAdmin;
 
-  /* Follow visibility rules (mirrors backend validation) */
   const canFollow =
     !ownsPost &&
-    ((userRole === 'student' && post.author?.role === 'alumni') ||
-      (userRole === 'alumni' && ['student', 'alumni'].includes(post.author?.role)));
+    ['student', 'alumni', 'admin'].includes(userRole) &&
+    ['student', 'alumni', 'admin'].includes(post.author?.role);
 
   /* ── edit save ── */
   const handleSaveEdit = async (e) => {
@@ -181,6 +182,16 @@ const PostCard = ({
     }
   };
 
+  const handleCopyLink = async () => {
+    const url = new URL(`/community/posts/${post._id}`, window.location.origin).toString();
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Post link copied to clipboard.');
+    } catch (error) {
+      toast.error(error.message || 'Could not copy the post link.');
+    }
+  };
+
   return (
     <article
       id={`post-${post._id}`}
@@ -219,6 +230,11 @@ const PostCard = ({
                 post.author?.branch ||
                 'Alumni Nexus member'}
             </p>
+            {post.author?.collegeId?.name && (
+              <p className="mt-0.5 text-xs text-slate-500">
+                {post.author.collegeId.name}
+              </p>
+            )}
 
             {/* Follower / following counts */}
             <p className="mt-0.5 text-xs text-slate-400">
@@ -320,9 +336,9 @@ const PostCard = ({
                   {post.content}
                 </p>
               )}
-              {safeImage(post.image?.url) && (
+              {safeImage(post.image?.url || post.imageUrl || post.image) && (
                 <img
-                  src={safeImage(post.image.url)}
+                  src={safeImage(post.image?.url || post.imageUrl || post.image)}
                   alt={post.image?.name || 'Community post image'}
                   loading="lazy"
                   className="mt-4 max-h-[34rem] w-full rounded-xl bg-slate-100 object-contain"
@@ -375,6 +391,13 @@ const PostCard = ({
               >
                 ↗ Share
               </button>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Copy link
+              </button>
 
               {/* Follow */}
               {canFollow && (
@@ -413,4 +436,3 @@ const PostCard = ({
 };
 
 export default PostCard;
-

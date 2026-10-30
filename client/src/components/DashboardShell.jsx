@@ -10,7 +10,8 @@ const roleLabels = {
       { label: 'Alumni directory', path: '/student/alumni' },
       { label: 'Referrals', path: '/student/referrals' },
       { label: 'Mentorship', path: '/student/mentorship' },
-      { label: 'Community', path: '/community' },
+      { label: 'Update Post', path: '/community' },
+      { label: 'Common Posts', path: '/community/posts' },
     ],
   },
   alumni: {
@@ -22,7 +23,8 @@ const roleLabels = {
       { label: 'Referrals', path: '/alumni/referrals' },
       { label: 'Mentorship', path: '/alumni/mentorship' },
       { label: 'Insights', path: '/alumni/insights' },
-      { label: 'Community', path: '/community' },
+      { label: 'Update Post', path: '/community' },
+      { label: 'Common Posts', path: '/community/posts' },
     ],
   },
   admin: {
@@ -35,7 +37,8 @@ const roleLabels = {
       { label: 'Invitation codes', path: '/admin/invitation-codes' },
       { label: 'Reports', path: '/admin/reports' },
       { label: 'Settings', path: '/admin/settings' },
-      { label: 'Community', path: '/community' },
+      { label: 'Update Post', path: '/community' },
+      { label: 'Common Posts', path: '/community/posts' },
     ],
   },
 };
@@ -92,7 +95,8 @@ const DashboardShell = ({ role = 'student', children, pageTitle }) => {
                 to={item.path}
                 className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                   pathname === item.path ||
-                  (item.path === '/community' && pathname.startsWith('/community/'))
+                  (item.path === '/community/posts' &&
+                    pathname.startsWith('/community/posts/'))
                     ? 'bg-sky-500 text-white'
                     : 'text-slate-200 hover:bg-slate-800 hover:text-white'
                 }`}
@@ -136,10 +140,10 @@ const DashboardShell = ({ role = 'student', children, pageTitle }) => {
             <div className="flex items-center gap-3">
               {/* Mobile community shortcut */}
               <Link
-                to="/community"
+                to="/community/posts"
                 className="rounded-xl bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 hover:bg-sky-100 lg:hidden"
               >
-                Community
+                Common Posts
               </Link>
 
               {/* Display name (desktop only) */}

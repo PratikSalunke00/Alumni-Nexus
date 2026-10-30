@@ -10,7 +10,13 @@ import Follow from "../models/Follow.js";
 import StudentProfile from "../models/StudentProfile.js";
 
 const COMMUNITY_ROLES = ["student", "alumni", "admin"];
-const AUTHOR_FIELDS = "name role profilePhoto headline branch department company jobTitle";
+const AUTHOR_FIELDS = "name role profilePhoto headline branch department company jobTitle collegeId";
+const COMMUNITY_AUTHOR_POPULATE = {
+  path: "author",
+  select: AUTHOR_FIELDS,
+  match: { isActive: true },
+  populate: { path: "collegeId", select: "name" },
+};
 const isValidId = (id) => mongoose.isValidObjectId(id);
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const hasValidPostId = (req, res) => {
@@ -62,7 +68,7 @@ const attachStudentProfilePhotos = async (records) => {
 const getCollegePost = async (postId, collegeId) => {
   if (!isValidId(postId)) return null;
   return Post.findOne({ _id: postId, collegeId })
-    .populate({ path: "author", select: AUTHOR_FIELDS, match: { isActive: true } })
+    .populate(COMMUNITY_AUTHOR_POPULATE)
     .lean();
 };
 
@@ -133,12 +139,17 @@ export const getCommunityPosts = async (req, res) => {
     const limit = Math.min(30, Math.max(1, Number.parseInt(req.query.limit, 10) || 10));
     const category = typeof req.query.category === "string" ? req.query.category.trim() : "";
     const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 100) : "";
+    const authorId = typeof req.query.authorId === "string" ? req.query.authorId.trim() : "";
 
     if (category && category !== "All Posts" && !COMMUNITY_CATEGORIES.includes(category)) {
       return res.status(400).json({ success: false, message: "Invalid post category" });
     }
+    if (authorId && !isValidId(authorId)) {
+      return res.status(400).json({ success: false, message: "Invalid author ID" });
+    }
 
     const filter = { collegeId: user.collegeId };
+    if (authorId) filter.author = authorId;
     if (category && category !== "All Posts") filter.category = category;
     if (search) {
       const regex = new RegExp(escapeRegex(search), "i");
@@ -159,7 +170,7 @@ export const getCommunityPosts = async (req, res) => {
 
     const [foundPosts, total] = await Promise.all([
       Post.find(filter)
-        .populate({ path: "author", select: AUTHOR_FIELDS, match: { isActive: true } })
+        .populate(COMMUNITY_AUTHOR_POPULATE)
         .sort({ createdAt: -1, _id: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -172,6 +183,7 @@ export const getCommunityPosts = async (req, res) => {
     return res.json({
       success: true,
       data,
+      posts: data,
       pagination: { page, limit, total, hasMore: page * limit < total },
     });
   } catch (error) {
@@ -200,7 +212,7 @@ export const createCommunityPost = async (req, res) => {
   try {
     const user = await getCommunityUser(req, res);
     if (!user) return;
-    const content = typeof req.body?.content === "string" ? req.body.content.trim() : "";
+    const content = typeof req.body?.content === "string" ? req.body.content.trim() : (typeof req.body?.text === "string" ? req.body.text.trim() : "");
     const category = req.body?.category || "General Discussion";
     const imageInput = req.body?.image;
     let image;
@@ -250,9 +262,6 @@ export const createCommunityPost = async (req, res) => {
     if (content.length > 5000 || (!content && !image)) {
       return res.status(400).json({ success: false, message: "A post must include text (up to 5,000 characters), an image, or both" });
     }
-    if (user.role !== "admin" && user.verificationStatus !== "verified") {
-      return res.status(403).json({ success: false, message: "Your account must be verified before you can publish community posts" });
-    }
     if (!COMMUNITY_CATEGORIES.includes(category)) {
       return res.status(400).json({ success: false, message: "Invalid post category" });
     }
@@ -268,7 +277,7 @@ export const createCommunityPost = async (req, res) => {
       category,
     });
     const populated = await Post.findById(post._id)
-      .populate({ path: "author", select: AUTHOR_FIELDS, match: { isActive: true } })
+      .populate(COMMUNITY_AUTHOR_POPULATE)
       .lean();
     return res.status(201).json({
       success: true,
@@ -396,7 +405,7 @@ export const getCommunityComments = async (req, res) => {
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
     const [comments, total] = await Promise.all([
       Comment.find({ postId: post._id, collegeId: user.collegeId })
-        .populate({ path: "author", select: AUTHOR_FIELDS, match: { isActive: true } })
+        .populate(COMMUNITY_AUTHOR_POPULATE)
         .sort({ createdAt: -1, _id: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -434,7 +443,7 @@ export const createCommunityComment = async (req, res) => {
       content,
     });
     const populated = await Comment.findById(comment._id)
-      .populate({ path: "author", select: AUTHOR_FIELDS, match: { isActive: true } })
+      .populate(COMMUNITY_AUTHOR_POPULATE)
       .lean();
     const [commentWithPhoto] = await attachStudentProfilePhotos([populated]);
     return res.status(201).json({ success: true, message: "Comment added", data: commentWithPhoto });
@@ -490,12 +499,8 @@ const updateFollow = async (req, res, following) => {
       isActive: true,
     }).select("_id role");
     if (!target) return res.status(404).json({ success: false, message: "User not found in your college community" });
-    if (
-      !["student", "alumni"].includes(user.role) ||
-      (user.role === "student" && target.role !== "alumni") ||
-      !["student", "alumni"].includes(target.role)
-    ) {
-      return res.status(403).json({ success: false, message: "Students can follow alumni; alumni can follow students and alumni" });
+    if (!COMMUNITY_ROLES.includes(target.role)) {
+      return res.status(403).json({ success: false, message: "This account cannot be followed" });
     }
 
     if (following) {

@@ -208,7 +208,7 @@ const CreatePost = ({
 
         <form onSubmit={handleSubmit} className="min-w-0 flex-1">
           <label htmlFor="cp-content" className="sr-only">
-            Write a community post
+            Write an update post
           </label>
 
           {!canCreate ? (
@@ -216,7 +216,7 @@ const CreatePost = ({
             <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
               <span className="font-semibold">Account not verified.</span>{' '}
               Your account must be verified by an admin before you can publish
-              community posts.
+              update posts.
             </div>
           ) : (
             <>
@@ -227,7 +227,7 @@ const CreatePost = ({
                 onChange={(e) => setContent(e.target.value)}
                 maxLength={MAX_CHARS}
                 rows={4}
-                placeholder="What's happening in your college community?"
+                placeholder="What's happening? Share an update, achievement, or discussion..."
                 className="w-full resize-y rounded-xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
               />
 

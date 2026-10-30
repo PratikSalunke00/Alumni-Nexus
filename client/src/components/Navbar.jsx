@@ -53,6 +53,14 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+          {user && (
+            <Link
+              to="/community/posts"
+              className="text-sm font-medium text-slate-600 transition hover:text-sky-600"
+            >
+              Common Posts
+            </Link>
+          )}
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -121,13 +129,22 @@ const Navbar = () => {
             ))}
 
             {user ? (
-              <Link
-                onClick={() => setMenuOpen(false)}
-                to={role === 'student' ? '/student/profile' : role === 'alumni' ? '/alumni/profile' : '/admin/dashboard'}
-                className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700"
-              >
-                Profile
-              </Link>
+              <>
+                <Link
+                  onClick={() => setMenuOpen(false)}
+                  to="/community/posts"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-sky-600"
+                >
+                  Common Posts
+                </Link>
+                <Link
+                  onClick={() => setMenuOpen(false)}
+                  to={role === 'student' ? '/student/profile' : role === 'alumni' ? '/alumni/profile' : '/admin/dashboard'}
+                  className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700"
+                >
+                  Profile
+                </Link>
+              </>
             ) : (
               <>
                 <Link

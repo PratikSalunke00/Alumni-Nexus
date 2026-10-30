@@ -60,7 +60,7 @@ const StudentNavbar = () => {
           onClick={() => setMenuOpen(false)}
           className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-sky-600"
         >
-          Common Posts 
+          Common Posts
         </Link>
 
         {/* Desktop Navigation */}
@@ -75,15 +75,6 @@ const StudentNavbar = () => {
             </Link>
           ))}
 
-          {/* Common Posts */}
-          {user && (
-            <Link
-              to="/community/posts"
-              className="text-sm font-medium text-slate-600 transition hover:text-sky-600"
-            >
-              Common Posts
-            </Link>
-          )}
         </div>
 
         {/* Desktop Buttons */}
@@ -107,13 +98,13 @@ const StudentNavbar = () => {
                 Profile
               </Link>
 
-              {/* Common Posts */}
+              {/* Update Post */}
               <Link
-                to="/community/posts"
+                to="/community"
                 className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
               >
-                Common Posts
-              </Link>
+                Update Post
+        </Link>
 
               {/* Sign out */}
               <button
@@ -175,13 +166,13 @@ const StudentNavbar = () => {
                   Profile
                 </Link>
 
-                {/* Common Posts */}
+                {/* Update Post */}
                 <Link
-                  to="/community/posts"
+                  to="/community"
                   onClick={() => setMenuOpen(false)}
                   className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700"
                 >
-                  Common Posts
+                  Update Post
                 </Link>
 
                 {/* Sign out */}

@@ -35,6 +35,8 @@ const emptyProfile = {
   leetcode: '',
   photo: '',
   resume: '',
+  followerCount: 0,
+  followingCount: 0,
 };
 
 const emptyEducation = {
@@ -1141,6 +1143,18 @@ const StudentProfile = () => {
 
   const renderOverview = () => (
     <div className="space-y-6">
+      <Section title="Your Network">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-sky-50 p-4">
+            <p className="text-2xl font-bold text-sky-800">{profile.followerCount || 0}</p>
+            <p className="mt-1 text-sm text-slate-600">Followers</p>
+          </div>
+          <div className="rounded-xl bg-slate-50 p-4">
+            <p className="text-2xl font-bold text-slate-800">{profile.followingCount || 0}</p>
+            <p className="mt-1 text-sm text-slate-600">Following</p>
+          </div>
+        </div>
+      </Section>
       <Section
         title="About Me"
         description="Your introduction to students, alumni, and recruiters."

@@ -22,7 +22,7 @@
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import DashboardShell from '../../components/DashboardShell';
 import CreatePost from '../../components/community/CreatePost';
@@ -87,7 +87,9 @@ const PostSkeleton = () => (
 ══════════════════════════════════════════════════════════════════════════════ */
 const AllPosts = () => {
   const { postId } = useParams();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
+  const isCommonPostsPage = pathname === '/community/posts' || Boolean(postId);
 
   /* ── Session data ── */
   const localUser = getLocalUser();
@@ -100,8 +102,6 @@ const AllPosts = () => {
     name: localStorage.getItem('name') || localUser.name || 'You',
     profilePhoto: localUser.profilePhoto || '',
   };
-  const canCreatePost =
-    userRole === 'admin' || localUser.verificationStatus === 'verified';
   const canAnnounce = userRole === 'admin';
 
   /* ── Feed state ── */
@@ -133,10 +133,10 @@ const AllPosts = () => {
   /* ═══════════ Data fetching ═══════════ */
 
   const fetchFeed = useCallback(
-    async (requestedPage = 1, append = false) => {
+    async (requestedPage = 1, append = false, quiet = false) => {
       const rid = ++requestId.current;
       if (append) setLoadingMore(true);
-      else {
+      else if (!quiet) {
         setLoading(true);
         setLoadError('');
       }
@@ -151,17 +151,25 @@ const AllPosts = () => {
           },
         });
         if (rid !== requestId.current) return;
-        setPosts((prev) => (append ? [...prev, ...data.data] : data.data));
-        setPage(requestedPage);
+        setPosts((prev) => {
+          if (append) return [...prev, ...data.data];
+          if (!quiet) return data.data;
+          const refreshedIds = new Set(data.data.map((post) => post._id));
+          return [
+            ...data.data,
+            ...prev.filter((post) => !refreshedIds.has(post._id)),
+          ];
+        });
+        if (!quiet) setPage(requestedPage);
         setHasMore(Boolean(data.pagination?.hasMore));
       } catch (error) {
         if (rid !== requestId.current) return;
         const msg = getErrorMessage(error);
-        setLoadError(msg);
-        toast.error(msg);
+        if (!quiet) setLoadError(msg);
+        toast.error(quiet ? `Feed refresh failed: ${msg}` : msg);
       } finally {
         if (rid === requestId.current) {
-          setLoading(false);
+          if (!quiet) setLoading(false);
           setLoadingMore(false);
         }
       }
@@ -198,7 +206,20 @@ const AllPosts = () => {
       window.clearTimeout(timer);
       requestId.current += 1;
     };
-  }, [postId, fetchFeed, fetchSinglePost]);
+  }, [pathname, postId, fetchFeed, fetchSinglePost]);
+
+  useEffect(() => {
+    if (postId) return undefined;
+    const refresh = () => {
+      if (document.visibilityState === 'visible') fetchFeed(1, false, true);
+    };
+    const interval = window.setInterval(refresh, 30000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [fetchFeed, postId]);
 
   /* ═══════════ Create post ═══════════ */
 
@@ -424,17 +445,47 @@ const AllPosts = () => {
   /* ═══════════ Render ═══════════ */
 
   return (
-    <DashboardShell role={userRole} pageTitle="Community">
+    <DashboardShell
+      role={userRole}
+      pageTitle={isCommonPostsPage ? 'Common Posts' : 'Update Post'}
+    >
       <Toaster position="top-right" />
 
       <div className="mx-auto max-w-4xl space-y-6">
 
         {/* ── Page header ── */}
-        <header>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Community</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Connect, share knowledge, and grow with your college community.
-          </p>
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600">
+              Alumni Nexus
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+              {isCommonPostsPage ? 'Common Posts' : 'Update Post'}
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              {isCommonPostsPage
+                ? 'See the latest updates shared across your college community.'
+                : 'Share an update with your college community.'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {!postId && (
+              <Link
+                to={isCommonPostsPage ? '/community' : '/community/posts'}
+                className="self-start rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {isCommonPostsPage ? 'Share an update' : 'View Common Posts'}
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => (postId ? fetchSinglePost() : fetchFeed(1))}
+              disabled={loading}
+              className="self-start rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              {loading ? 'Refreshing…' : '↻ Refresh'}
+            </button>
+          </div>
         </header>
 
         {/* ── Single-post back link ── */}
@@ -443,7 +494,7 @@ const AllPosts = () => {
             to="/community"
             className="inline-flex items-center gap-1 text-sm font-semibold text-sky-700 hover:underline"
           >
-            ← Back to Community
+            ← Back to Update Post
           </Link>
         )}
 
@@ -452,7 +503,6 @@ const AllPosts = () => {
           <CreatePost
             onPostCreated={handlePostCreated}
             currentUser={currentUser}
-            canCreate={canCreatePost}
             canAnnounce={canAnnounce}
             apiBaseUrl={API_URL}
             getAuthConfig={getAuthConfig}
@@ -612,4 +662,3 @@ const AllPosts = () => {
 };
 
 export default AllPosts;
-

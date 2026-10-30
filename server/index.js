@@ -35,7 +35,7 @@ import {
   deleteCommunityComment,
   followCommunityUser,
   unfollowCommunityUser,
-} from "./controller/community.js";
+} from "./controller/updatePost.js";
 import {
   registerStudent,
   registerAlumni,
