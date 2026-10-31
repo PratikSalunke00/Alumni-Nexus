@@ -58,7 +58,7 @@ createRoot(document.getElementById("root")).render(
         path="/community/posts/:postId"
         element={
           <ProtectedRoute allowedRoles={["student", "alumni", "admin"]}>
-            <AllPosts />
+            <CommonPost />
           </ProtectedRoute>
         }
       />

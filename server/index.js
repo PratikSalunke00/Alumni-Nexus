@@ -148,6 +148,7 @@ app.put(
 // ──────────────────────────────────────────────
 app.use("/api/student", studentProfileRoutes);
 app.use("/api/student", checkJWT, imagekitRoutes);
+app.use("/api", checkJWT, imagekitRoutes);
 
 // ──────────────────────────────────────────────
 // VERIFICATION REQUESTS

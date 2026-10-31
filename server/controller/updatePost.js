@@ -8,13 +8,14 @@ import Comment from "../models/Comment.js";
 import PostLike from "../models/PostLike.js";
 import Follow from "../models/Follow.js";
 import StudentProfile from "../models/StudentProfile.js";
+import College from "../models/College.js";
 
 const COMMUNITY_ROLES = ["student", "alumni", "admin"];
 const AUTHOR_FIELDS = "name role profilePhoto headline branch department company jobTitle collegeId";
 const COMMUNITY_AUTHOR_POPULATE = {
   path: "author",
   select: AUTHOR_FIELDS,
-  match: { isActive: true },
+  match: { isActive: { $ne: false } },
   populate: { path: "collegeId", select: "name" },
 };
 const isValidId = (id) => mongoose.isValidObjectId(id);
@@ -35,10 +36,22 @@ const getCommunityUser = async (req, res) => {
   const user = await User.findById(userId)
     .select("name role collegeId profilePhoto headline branch department company jobTitle verificationStatus isActive")
     .lean();
-  if (!user || !user.isActive || !COMMUNITY_ROLES.includes(user.role) || !user.collegeId) {
+  if (!user || user.isActive === false || !COMMUNITY_ROLES.includes(user.role)) {
     res.status(403).json({ success: false, message: "You cannot access the community feed" });
     return null;
   }
+
+  if (!user.collegeId) {
+    const defaultCollege = await College.findOne().select("_id").lean();
+    if (defaultCollege) {
+      user.collegeId = defaultCollege._id;
+      await User.findByIdAndUpdate(user._id, { collegeId: defaultCollege._id });
+    } else {
+      res.status(403).json({ success: false, message: "College association required" });
+      return null;
+    }
+  }
+
   return user;
 };
 
@@ -212,7 +225,7 @@ export const createCommunityPost = async (req, res) => {
   try {
     const user = await getCommunityUser(req, res);
     if (!user) return;
-    const content = typeof req.body?.content === "string" ? req.body.content.trim() : (typeof req.body?.text === "string" ? req.body.text.trim() : "");
+    const content = typeof req.body?.content === "string" ? req.body.content.trim() : (typeof req.body?.text === "string" ? req.body.text.trim() : (typeof req.body?.description === "string" ? req.body.description.trim() : ""));
     const category = req.body?.category || "General Discussion";
     const imageInput = req.body?.image;
     let image;

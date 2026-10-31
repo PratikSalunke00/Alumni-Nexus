@@ -11,7 +11,6 @@ const roleLabels = {
       { label: 'Referrals', path: '/student/referrals' },
       { label: 'Mentorship', path: '/student/mentorship' },
       { label: 'Update Post', path: '/community' },
-      { label: 'Common Posts', path: '/community/posts' },
     ],
   },
   alumni: {
@@ -24,7 +23,6 @@ const roleLabels = {
       { label: 'Mentorship', path: '/alumni/mentorship' },
       { label: 'Insights', path: '/alumni/insights' },
       { label: 'Update Post', path: '/community' },
-      { label: 'Common Posts', path: '/community/posts' },
     ],
   },
   admin: {
@@ -38,7 +36,6 @@ const roleLabels = {
       { label: 'Reports', path: '/admin/reports' },
       { label: 'Settings', path: '/admin/settings' },
       { label: 'Update Post', path: '/community' },
-      { label: 'Common Posts', path: '/community/posts' },
     ],
   },
 };
