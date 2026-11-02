@@ -533,23 +533,6 @@ const CommonPost = () => {
               </select>
             </div>
 
-            {/* Category pills */}
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {FILTERS.map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => setCategory(f)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                    category === f
-                      ? 'bg-sky-600 text-white shadow-xs'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
           </section>
         )}
 
