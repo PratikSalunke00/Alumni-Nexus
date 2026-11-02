@@ -5,6 +5,7 @@ import toast, { Toaster } from "react-hot-toast";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const getToken = () => localStorage.getItem("token") || localStorage.getItem("userJwtToken") || "";
+import StudentNavbar from "../../components/StudentNavbar";
 
 const StudentMentorshipPage = () => {
   const [requests, setRequests] = useState([]);
@@ -33,6 +34,7 @@ const StudentMentorshipPage = () => {
   };
 
   return (
+    <><StudentNavbar />
     <DashboardShell role="student" pageTitle="My mentorship requests">
       <Toaster position="top-right" />
       <div className="space-y-5">
@@ -80,6 +82,7 @@ const StudentMentorshipPage = () => {
         )}
       </div>
     </DashboardShell>
+    </>
   );
 };
 

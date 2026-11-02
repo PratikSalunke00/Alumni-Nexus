@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import DashboardShell from "../../components/DashboardShell";
 import toast, { Toaster } from "react-hot-toast";
+import StudentNavbar from "../../components/StudentNavbar";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const getToken = () => localStorage.getItem("token") || localStorage.getItem("userJwtToken") || "";
@@ -243,6 +244,8 @@ const StudentAlumniDirectoryPage = () => {
   };
 
   return (
+    <>
+    <StudentNavbar />
     <DashboardShell role="student" pageTitle="Alumni directory">
       <Toaster position="top-right" />
       <div className="space-y-5">
@@ -323,7 +326,9 @@ const StudentAlumniDirectoryPage = () => {
         />
       )}
     </DashboardShell>
+    </>
   );
 };
+
 
 export default StudentAlumniDirectoryPage;

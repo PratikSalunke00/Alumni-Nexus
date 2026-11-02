@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import DashboardShell from "../../components/DashboardShell";
 import toast, { Toaster } from "react-hot-toast";
+import StudentNavbar from "../../components/StudentNavbar";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const getToken = () => localStorage.getItem("token") || localStorage.getItem("userJwtToken") || "";
@@ -23,6 +24,7 @@ const ApplyModal = ({ opportunity, onClose, onSubmit }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+     
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
@@ -118,6 +120,7 @@ const StudentOpportunitiesPage = () => {
 
   return (
     <>
+     <StudentNavbar />
       <DashboardShell role="student" pageTitle="Opportunities">
         <Toaster position="top-right" />
         <div className="space-y-5">

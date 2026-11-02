@@ -481,49 +481,8 @@ const CommonPost = () => {
       {/* Main Content Area (Centered Feed, No Sidebar, No Upload Option) */}
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
 
-        {/* ── Page Header ── */}
-        <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600">
-                Alumni Nexus Community
-              </p>
-            </div>
-            <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
-              Common Posts
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              College-wide feed featuring all updates, stories, and insights from students and alumni.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => (postId ? fetchSinglePost() : fetchFeed(1))}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-50"
-            >
-              <span>{loading ? 'Refreshing…' : '↻ Refresh'}</span>
-            </button>
-
-            <Link
-              to={dashboardPath}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-            >
-              <span>Dashboard</span>
-            </Link>
-
-            <Link
-              to="/community"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-sky-700"
-            >
-              <span>Update Post</span>
-              <span>→</span>
-            </Link>
-          </div>
-        </header>
+      
+       
 
         {/* ── Single-post Back Banner ── */}
         {postId && (
