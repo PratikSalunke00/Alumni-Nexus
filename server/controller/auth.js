@@ -379,6 +379,7 @@ export const login = async (req, res) => {
         collegeId: user.collegeId._id,
         collegeName: user.collegeId.name,
         verificationStatus: user.verificationStatus,
+        profilePhoto: user.profilePhoto || "",
       },
     });
   } catch (error) {

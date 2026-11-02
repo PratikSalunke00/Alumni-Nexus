@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import { upload } from "@imagekit/javascript";
 import DashboardShell from "../../components/DashboardShell";
 import ProfileCompletion from "../../components/ProfileCompletion";
 
@@ -71,6 +72,20 @@ const fetchAlumniProfile = async () => {
     throw new Error("An alumni profile could not be found for this account.");
   }
   return normalize(data.data);
+};
+const syncLocalUser = ({ name, email, profilePhoto }) => {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("userData") || "{}");
+    localStorage.setItem("userData", JSON.stringify({
+      ...currentUser,
+      name,
+      email,
+      profilePhoto: profilePhoto || "",
+    }));
+    localStorage.setItem("name", name);
+  } catch (error) {
+    console.error("Failed to update cached profile details:", error);
+  }
 };
 
 const Section = ({ title, description, children }) => (
@@ -165,6 +180,8 @@ const AlumniProfile = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState("");
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("Overview");
 
@@ -173,6 +190,8 @@ const AlumniProfile = () => {
       const saved = await fetchAlumniProfile();
       setProfile(saved);
       setDraft(saved);
+      setPhotoPreview(saved.profilePhoto || "");
+      syncLocalUser(saved);
     } catch (error) {
       const message = getErrorMessage(error);
       setLoadError(message);
@@ -188,6 +207,8 @@ const AlumniProfile = () => {
         if (active) {
           setProfile(saved);
           setDraft(saved);
+          setPhotoPreview(saved.profilePhoto || "");
+          syncLocalUser(saved);
         }
       })
       .catch((error) => {
@@ -208,7 +229,10 @@ const AlumniProfile = () => {
     loadProfile();
   };
 
-  const updateField = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const updateField = (field, value) => {
+    setDraft((current) => ({ ...current, [field]: value }));
+    if (field === "profilePhoto") setPhotoPreview(value);
+  };
   const updateEntry = (section, index, field, value) => setDraft((current) => ({
     ...current,
     [section]: current[section].map((item, i) => i === index ? { ...item, [field]: value } : item),
@@ -218,11 +242,81 @@ const AlumniProfile = () => {
     ...current,
     [section]: current[section].filter((_, i) => i !== index),
   }));
-  const beginEditing = () => { setDraft(normalize(profile)); setEditing(true); };
-  const cancelEditing = () => { setDraft(normalize(profile)); setEditing(false); };
+  const beginEditing = () => {
+    setDraft(normalize(profile));
+    setPhotoPreview(profile.profilePhoto || "");
+    setEditing(true);
+  };
+  const cancelEditing = () => {
+    setDraft(normalize(profile));
+    setPhotoPreview(profile.profilePhoto || "");
+    setEditing(false);
+  };
+
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Choose a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("The maximum file size is 5 MB.");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    const previousPhoto = draft.profilePhoto;
+    setPhotoPreview(previewUrl);
+    setUploading(true);
+
+    try {
+      const { data: auth } = await axios.get(
+        `${API_URL}/api/student/imagekit-auth/auth`,
+        getConfig()
+      );
+      if (!auth.token || !auth.signature || !auth.expire || !auth.publicKey) {
+        throw new Error("ImageKit authentication credentials are incomplete.");
+      }
+
+      const result = await upload({
+        file,
+        fileName: file.name,
+        token: auth.token,
+        signature: auth.signature,
+        expire: auth.expire,
+        publicKey: auth.publicKey,
+        folder: "/alumni-profiles",
+        useUniqueFileName: true,
+      });
+
+      if (!result.url) {
+        throw new Error("ImageKit did not return a file URL.");
+      }
+
+      updateField("profilePhoto", result.url);
+      toast.success("Profile picture uploaded. Save changes to keep it.");
+    } catch (error) {
+      console.error("ImageKit upload error:", error);
+      setPhotoPreview(previousPhoto || "");
+      toast.error(getErrorMessage(error));
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+      setUploading(false);
+    }
+  };
+
+  const removeProfilePhoto = () => {
+    if (!window.confirm("Remove your current profile picture?")) return;
+    updateField("profilePhoto", "");
+    toast("Save changes to remove your profile picture.");
+  };
 
   const handleSave = async (event) => {
     event.preventDefault();
+    if (uploading) return;
     if (!draft.name.trim()) {
       toast.error("Your name is required.");
       setActiveTab("Personal Information");
@@ -257,12 +351,20 @@ const AlumniProfile = () => {
     }
     setSaving(true);
     try {
-      const payload = Object.fromEntries(editableFields.map((field) => [field, draft[field]]));
-      payload.graduationYear = graduationYear;
+      const payload = Object.fromEntries(
+        editableFields
+          .filter((field) => JSON.stringify(draft[field]) !== JSON.stringify(profile[field]))
+          .map((field) => [field, draft[field]])
+      );
+      if (Object.hasOwn(payload, "graduationYear")) {
+        payload.graduationYear = graduationYear;
+      }
       const { data } = await axios.put(`${API_URL}/api/alumni/profile/me`, payload, getConfig());
       const saved = normalize(data.data);
       setProfile(saved);
       setDraft(saved);
+      setPhotoPreview(saved.profilePhoto || "");
+      syncLocalUser(saved);
       setEditing(false);
       toast.success("Profile saved successfully.");
     } catch (error) {
@@ -318,6 +420,35 @@ const AlumniProfile = () => {
       </Section>
       <Section title="About Me" description="Your professional summary">
         {draft.bio ? <p className="whitespace-pre-wrap text-sm leading-7 text-slate-600">{draft.bio}</p> : <EmptyState>Add a professional summary to introduce yourself.</EmptyState>}
+      </Section>
+      <Section title="Contact & Professional Links" description="Your contact details are shown only in your authenticated profile.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Email</p>
+            {draft.email
+              ? <a href={`mailto:${draft.email}`} className="mt-1 inline-block break-all text-sm font-medium text-sky-700 hover:underline">{draft.email}</a>
+              : <p className="mt-1 text-sm text-slate-500">Add your email address.</p>}
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Phone</p>
+            {draft.phone
+              ? <a href={`tel:${draft.phone}`} className="mt-1 inline-block text-sm font-medium text-sky-700 hover:underline">{draft.phone}</a>
+              : <p className="mt-1 text-sm text-slate-500">Add your contact number.</p>}
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Location</p>
+            <p className="mt-1 text-sm text-slate-700">{location(draft) || "Add your current location."}</p>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            {[
+              ["LinkedIn", draft.linkedin],
+              ["GitHub", draft.github],
+            ].filter(([, url]) => safeHref(url)).map(([label, url]) => (
+              <a key={label} href={safeHref(url)} target="_blank" rel="noreferrer" className="text-sm font-medium text-sky-700 hover:underline">{label} ↗</a>
+            ))}
+            {!safeHref(draft.linkedin) && !safeHref(draft.github) && <p className="text-sm text-slate-500">Add your LinkedIn or GitHub profile.</p>}
+          </div>
+        </div>
       </Section>
       <div className="grid gap-6 lg:grid-cols-2">
         <Section title="Current Professional Role">
@@ -434,6 +565,9 @@ const AlumniProfile = () => {
     projects: draft.projects, resume: draft.resumeUrl, linkedin: draft.linkedin,
     github: draft.github, certifications: draft.certifications,
   };
+  const safePhotoPreview = photoPreview.startsWith("blob:")
+    ? photoPreview
+    : safeHref(photoPreview);
 
   return <DashboardShell role="alumni" pageTitle="My Profile">
     <Toaster position="top-right" />
@@ -442,12 +576,12 @@ const AlumniProfile = () => {
         : loadError ? <section className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center"><h1 className="font-semibold text-rose-900">Unable to load your profile</h1><p className="mt-2 text-sm text-rose-700">{loadError}</p><button type="button" onClick={retryProfileLoad} className="mt-4 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">Try again</button></section>
           : <>
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="h-28 bg-gradient-to-r from-sky-600 to-indigo-600 sm:h-36" />
+              <div className="h-32 bg-gradient-to-r from-sky-700 via-sky-600 to-indigo-600 sm:h-40" />
               <div className="px-5 pb-5 sm:px-7">
-                <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
+                <div className="-mt-14 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex items-end gap-4">
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-sky-50 text-3xl font-bold text-sky-700 shadow-sm sm:h-28 sm:w-28">
-                      {safeHref(draft.profilePhoto) ? <img src={safeHref(draft.profilePhoto)} alt={`${draft.name || "Alumni"} profile`} className="h-full w-full object-cover" /> : (draft.name.trim()[0] || "A").toUpperCase()}
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-sky-50 text-3xl font-bold text-sky-700 shadow-sm sm:h-28 sm:w-28">
+                      {safePhotoPreview ? <img src={safePhotoPreview} alt={`${draft.name || "Alumni"} profile`} className="h-full w-full object-cover" /> : (draft.name.trim()[0] || "A").toUpperCase()}
                     </div>
                     <div className="min-w-0 pb-1">
                       <h1 className="break-words text-xl font-bold text-slate-900 sm:text-2xl">{draft.name || "Your Name"}</h1>
@@ -455,15 +589,24 @@ const AlumniProfile = () => {
                       <p className="mt-1 text-sm text-slate-600">{[draft.jobTitle, draft.company].filter(Boolean).join(" at ") || "Add your current role"}</p>
                       <p className="mt-1 text-sm text-slate-500">{location(draft) || "Add your current location"}</p>
                       <p className="mt-1 text-sm text-slate-500">{[collegeName(draft), draft.education[0]?.degree, draft.education[0]?.branch || draft.branch, displayedGraduationYear && `Class of ${displayedGraduationYear}`].filter(Boolean).join(" · ") || "Add your education"}</p>
+                      <p className="mt-1 break-all text-sm text-sky-700">{draft.email}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 pt-2 sm:pb-1">
                     {!editing ? <button type="button" onClick={beginEditing} className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">Edit Profile</button> : <>
-                      <button type="button" onClick={cancelEditing} disabled={saving} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
-                      <button type="submit" form="alumni-profile-form" disabled={saving} className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+                      <button type="button" onClick={cancelEditing} disabled={saving || uploading} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+                      <button type="submit" form="alumni-profile-form" disabled={saving || uploading} className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
                     </>}
                   </div>
                 </div>
+                {editing && <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    {uploading ? "Uploading..." : photoPreview ? "Change Photo" : "Upload Photo"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploading || saving} onChange={handlePhotoUpload} />
+                  </label>
+                  {photoPreview && <button type="button" onClick={removeProfilePhoto} disabled={uploading || saving} className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50">Remove Photo</button>}
+                  <span className="text-xs text-slate-400">JPG, PNG or WebP · Maximum 5 MB · Save changes to keep your photo</span>
+                </div>}
                 <div className="mt-5 max-w-xl"><ProfileCompletion profile={completion} loading={loading} variant="compact" /></div>
               </div>
             </section>
@@ -473,8 +616,8 @@ const AlumniProfile = () => {
             </nav>
             <form id="alumni-profile-form" onSubmit={handleSave} className="space-y-6">{renderTab()}</form>
             {editing && <div className="flex justify-end gap-3">
-              <button type="button" onClick={cancelEditing} disabled={saving} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
-              <button type="submit" form="alumni-profile-form" disabled={saving} className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+              <button type="button" onClick={cancelEditing} disabled={saving || uploading} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+              <button type="submit" form="alumni-profile-form" disabled={saving || uploading} className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
             </div>}
           </>}
     </div>

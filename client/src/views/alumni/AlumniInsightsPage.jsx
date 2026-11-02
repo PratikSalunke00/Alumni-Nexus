@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import DashboardShell from "../../components/DashboardShell";
 import toast, { Toaster } from "react-hot-toast";
+import AluminiNavbar from "../../components/AluminiNavbar"
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const getToken = () => localStorage.getItem("token") || localStorage.getItem("userJwtToken") || "";
@@ -33,6 +34,8 @@ const AlumniInsightsPage = () => {
   (data?.referralsByStatus || []).forEach(({ _id, count }) => { referralMap[_id] = count; });
 
   return (
+    <>
+    <AluminiNavbar/>
     <DashboardShell role="alumni" pageTitle="My insights">
       <Toaster position="top-right" />
       <div className="space-y-6">
@@ -127,6 +130,7 @@ const AlumniInsightsPage = () => {
         )}
       </div>
     </DashboardShell>
+    </>
   );
 };
 

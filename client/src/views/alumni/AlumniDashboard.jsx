@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import DashboardShell from "../../components/DashboardShell";
 import StatCard from "../../components/StatCard";
+import AluminiNavbar from "../../components/AluminiNavbar";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const getToken = () => localStorage.getItem("token") || localStorage.getItem("userJwtToken") || "";
@@ -52,6 +53,8 @@ const AlumniDashboard = () => {
     : [];
 
   return (
+    <>
+    <AluminiNavbar />
     <DashboardShell role="alumni" pageTitle={`Welcome back, ${name}`}>
       <div className="space-y-6">
         {/* Verification Banner */}
@@ -155,6 +158,7 @@ const AlumniDashboard = () => {
         </section>
       </div>
     </DashboardShell>
+    </>
   );
 };
 
