@@ -4,6 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { upload } from "@imagekit/javascript";
 import DashboardShell from "../../components/DashboardShell";
 import ProfileCompletion from "../../components/ProfileCompletion";
+import AluminiNavbar from "../../components/AluminiNavbar"
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const tabs = [
@@ -569,7 +570,10 @@ const AlumniProfile = () => {
     ? photoPreview
     : safeHref(photoPreview);
 
-  return <DashboardShell role="alumni" pageTitle="My Profile">
+  return(
+  <>
+  <AluminiNavbar />
+  <DashboardShell role="alumni" pageTitle="My Profile">
     <Toaster position="top-right" />
     <div className="mx-auto max-w-6xl space-y-6 pb-8">
       {loading ? <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center"><div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600" /><p className="mt-4 text-sm text-slate-500">Loading your alumni profile...</p></div>
@@ -622,6 +626,8 @@ const AlumniProfile = () => {
           </>}
     </div>
   </DashboardShell>;
+  </>
+  );
 };
 
 export default AlumniProfile;
