@@ -14,6 +14,8 @@ import StudentReferralsPage from "./views/student/StudentReferralsPage.jsx";
 import StudentMentorshipPage from "./views/student/StudentMentorshipPage.jsx";
 import StudentProfile from "./views/student/StudentProfile.jsx";
 import StudentAlumniDirectoryPage from "./views/student/StudentAlumniDirectoryPage.jsx";
+import AllSession from "./views/AllSession.jsx";
+import MyBookings from "./views/student/MyBookings.jsx";
 
 // Alumni views
 import AlumniDashboard from "./views/alumni/AlumniDashboard.jsx";
@@ -22,6 +24,9 @@ import AlumniReferralsPage from "./views/alumni/AlumniReferralsPage.jsx";
 import AlumniMentorshipPage from "./views/alumni/AlumniMentorshipPage.jsx";
 import AlumniInsightsPage from "./views/alumni/AlumniInsightsPage.jsx";
 import AlumniProfile from "./views/alumni/AlumniProfile.jsx";
+import CreateSession from "./views/alumni/CreateSession.jsx";
+import MySessions from "./views/alumni/MySessions.jsx";
+import AlumniBookings from "./views/alumni/AlumniBookings.jsx";
 import AllPosts from "./views/AllPosts.jsx";
 
 // Admin views
@@ -130,6 +135,22 @@ createRoot(document.getElementById("root")).render(
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/student/sessions"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <AllSession />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/bookings"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <MyBookings />
+          </ProtectedRoute>
+        }
+      />
 
       {/* ─── ALUMNI ─── */}
       <Route
@@ -169,6 +190,38 @@ createRoot(document.getElementById("root")).render(
         element={
           <ProtectedRoute allowedRoles={["alumni"]}>
             <AlumniMentorshipPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/alumni/sessions"
+        element={
+          <ProtectedRoute allowedRoles={["alumni"]}>
+            <MySessions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/alumni/sessions/create"
+        element={
+          <ProtectedRoute allowedRoles={["alumni"]}>
+            <CreateSession />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/alumni/sessions/:id/edit"
+        element={
+          <ProtectedRoute allowedRoles={["alumni"]}>
+            <CreateSession />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/alumni/bookings"
+        element={
+          <ProtectedRoute allowedRoles={["alumni"]}>
+            <AlumniBookings />
           </ProtectedRoute>
         }
       />

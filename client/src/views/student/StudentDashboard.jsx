@@ -450,6 +450,34 @@ const StudentDashboard = () => {
             loading={profileLoading}
           />
 
+          <section className="flex flex-col gap-4 rounded-3xl border border-sky-100 bg-gradient-to-r from-sky-50 to-indigo-50 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
+                Alumni mentorship
+              </p>
+              <h3 className="mt-1 text-xl font-bold text-slate-900">
+                Explore mentorship sessions
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Find published sessions and learn directly from alumni.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to="/student/sessions"
+                className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700"
+              >
+                Browse sessions
+              </Link>
+              <Link
+                to="/student/bookings"
+                className="rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
+              >
+                My bookings
+              </Link>
+            </div>
+          </section>
+
           {/* Student statistics */}
           <section className="grid gap-4 md:grid-cols-3">
             {studentStats.map((stat, index) => (

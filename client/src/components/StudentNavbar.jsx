@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 
 const StudentNavbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,6 +36,12 @@ const StudentNavbar = () => {
   // Navigation items
   const navItems = [
     { label: "Dashboard", path: dashboardPath },
+    ...(role === "student"
+      ? [
+          { label: "Explore sessions", path: "/student/sessions" },
+          { label: "My bookings", path: "/student/bookings" },
+        ]
+      : []),
     { label: "Update Post", path: "/community" },
     { label: "Common Posts", path: "/community/posts" },
   ];

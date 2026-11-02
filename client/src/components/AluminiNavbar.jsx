@@ -21,14 +21,10 @@ const AlumniNavbar = () => {
     }
   })();
 
-  const name =
-    user?.name ||
-    user?.fullName ||
-    localStorage.getItem("name") ||
-    "Alumni";
-
   const navItems = [
     { label: "Dashboard", path: "/alumni/dashboard" },
+    { label: "My sessions", path: "/alumni/sessions" },
+    { label: "Bookings", path: "/alumni/bookings" },
     { label: "Community", path: "/community" },
     { label: "Common Posts", path: "/community/posts" },
   ];
